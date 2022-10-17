@@ -14,13 +14,20 @@
 //===----------------------------------------------------------------------===//
 //
 
-import XCTest
-@testable import Decide
+import Foundation
 
-final class DecideTests: XCTestCase {
+protocol AtomicState {
+    associatedtype Value
+    static func defaultValue() -> Value
+}
 
-    func testName() {
-//        let sut = Consumer()
-//        sut.test()
+extension Observe {
+    convenience init<T: AtomicState>(_ type: T.Type) where T.Value == Value {
+        let key = StorageKey.atom(ObjectIdentifier(type))
+        self.init(
+            key: key,
+            onBehalf: key,
+            defaultValue: type.defaultValue
+        )
     }
 }

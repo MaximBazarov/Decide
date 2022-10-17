@@ -14,13 +14,14 @@
 //===----------------------------------------------------------------------===//
 //
 
-import XCTest
-@testable import Decide
+import Foundation
 
-final class DecideTests: XCTestCase {
+@MainActor final class DependenciesAutoGraphStorage: Storage {
+    func getValue<V>(for key: StorageKey, onBehalf ownerKey: StorageKey?, defaultValue: () -> V) -> V {
+        fatalError()
+    }
 
-    func testName() {
-//        let sut = Consumer()
-//        sut.test()
+    func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+        fatalError()
     }
 }
