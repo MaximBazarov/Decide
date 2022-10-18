@@ -18,9 +18,4 @@ import XCTest
 @testable import Decide
 
 final class DecideTests: XCTestCase {
-
-    func testName() {
-//        let sut = Consumer()
-//        sut.test()
-    }
 }
