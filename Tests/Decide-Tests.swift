@@ -14,4 +14,8 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Foundation
+import XCTest
+@testable import Decide
+
+final class DecideTests: XCTestCase {
+}
