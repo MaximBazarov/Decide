@@ -16,57 +16,54 @@
 
 import Inject
 
-// MARK: - Atomic
+//===----------------------------------------------------------------------===//
+// MARK: - Observe
+//===----------------------------------------------------------------------===//
 
-/// Provides a read-only access to the ```` state type
+/// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Observe<Value> {
+
+    @Injected(
+        \.decide.storage,
+         lifespan: .permanent,
+         scope: .shared
+    ) var storage
+
     public var wrappedValue: Value {
-        get { getValue() }
+        get { getValue(storage.instance.storageReader) }
     }    
 
-    private var getValue: @MainActor () -> Value
+    private let getValue: @MainActor (StorageReader) -> Value
 
-    init(getValue: @escaping () -> Value) {
+    init(getValue: @MainActor @escaping (StorageReader) -> Value) {
         self.getValue = getValue
     }
 }
 
-/// Provides a read/write access to the atomic state type
+//===----------------------------------------------------------------------===//
+// MARK: - Bind
+//===----------------------------------------------------------------------===//
+
+/// Provides an observed read/write access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Bind<Value> {
+    @Injected(
+        \.decide.storage,
+         lifespan: .permanent,
+         scope: .shared
+    ) var storage
+
     public var wrappedValue: Value {
-        get { getValue() }
-        set { setValue(newValue) }
+        get { getValue(storage.instance.storageReader) }
+        set { setValue(storage.instance.storageWriter, newValue) }
     }
 
-    private var getValue: @MainActor () -> Value
-    private var setValue: @MainActor (Value) -> Void
+    private let getValue: @MainActor (StorageReader) -> Value
+    private let setValue: @MainActor (StorageWriter, Value) -> Void
 
-    init(
-        getValue: @escaping () -> Value,
-        setValue: @escaping (Value) -> Void
-    ) {
+    init(getValue: @escaping (StorageReader) -> Value, setValue: @escaping (StorageWriter, Value) -> Void) {
         self.getValue = getValue
         self.setValue = setValue
     }
 }
 
-// MARK: - Collection
-
-/// Provides a read-only access to the collection state type
-@MainActor @propertyWrapper
-public final class ObserveCollection<ID: Hashable, Value> {
-    public let wrappedValue: CollectionStateAccess<ID, Value>
-    public init(wrappedValue: CollectionStateAccess<ID, Value>) {
-        self.wrappedValue = wrappedValue
-    }
-}
-
-/// Provides a read/write access to the collection state type
-@MainActor @propertyWrapper
-public final class BindCollection<ID: Hashable, Value> {
-    public let wrappedValue: MutableCollectionStateAccess<ID, Value>
-    public init(wrappedValue: MutableCollectionStateAccess<ID, Value>) {
-        self.wrappedValue = wrappedValue
-    }
-}
-
+extension Observe: Injectable {}

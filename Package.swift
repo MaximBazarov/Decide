@@ -18,7 +18,7 @@ import PackageDescription
 let package = Package(
     name: "Decide",
     platforms: [
-        .macOS(.v12),
+        .macOS(.v13),
         .iOS(.v13),
         .watchOS(.v8),
         .tvOS(.v15),

@@ -6,5 +6,4 @@ WORK IN PROGRESS
 
 
 ## Topics
-
 ### Essential

@@ -14,8 +14,10 @@
 //===----------------------------------------------------------------------===//
 //
 
-import XCTest
-@testable import Decide
+import Decide
 
-final class DecideTests: XCTestCase {
+let intDefaultValue: Int = 0xDEF017
+
+final class IntStateSample: AtomicState {
+    static func defaultValue() -> Int { intDefaultValue }
 }
