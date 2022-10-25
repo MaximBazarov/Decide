@@ -6,5 +6,7 @@ WORK IN PROGRESS
 
 
 ## Topics
-
 ### Essential
+- ``Decision``
+- ``Effect``
+- ``DecisionEffectSystem/execute(decision:)``
