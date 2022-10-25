@@ -18,12 +18,6 @@ import XCTest
 import Decide
 
 @MainActor final class WrappersIntegrationTests: XCTestCase {
-    func test_Observe_EmptyStorage_mustReturn_DefaultValue() {
-    }
-
-    func test_Observe_WrittenValue_mustReturn_WrittenValue() {
-    }
-
     /**
      Read:
      - read default value

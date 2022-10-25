@@ -21,7 +21,6 @@ extension DefaultValues {
     /// ``Decide`` framework dependencies
     @MainActor struct DecideDependencies {
         var storage: StorageSystem { InMemoryStorage() }
-        var core: DecisionEffectSystem { LocalDecisionEffectSystem() }
     }
 
     /// ``Decide`` framework dependencies

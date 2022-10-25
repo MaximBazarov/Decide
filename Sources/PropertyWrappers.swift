@@ -23,7 +23,11 @@ import Inject
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Observe<Value> {
 
-    @Injected(\.decide.storage) var storage
+    @Injected(
+        \.decide.storage,
+         lifespan: .permanent,
+         scope: .shared
+    ) var storage
 
     public var wrappedValue: Value {
         get { getValue(storage.instance.storageReader) }
@@ -42,7 +46,11 @@ import Inject
 
 /// Provides an observed read/write access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Bind<Value> {
-    @Injected(\.decide.storage) var storage
+    @Injected(
+        \.decide.storage,
+         lifespan: .permanent,
+         scope: .shared
+    ) var storage
 
     public var wrappedValue: Value {
         get { getValue(storage.instance.storageReader) }
@@ -58,28 +66,4 @@ import Inject
     }
 }
 
-//===----------------------------------------------------------------------===//
-// MARK: - Observe Collection
-//===----------------------------------------------------------------------===//
-
-/// Provides a read-only access to the collection state type
-@MainActor @propertyWrapper
-public final class ObserveCollection<ID: Hashable, Value> {
-    public let wrappedValue: CollectionStateAccess<ID, Value>
-    public init(wrappedValue: CollectionStateAccess<ID, Value>) {
-        self.wrappedValue = wrappedValue
-    }
-}
-
-//===----------------------------------------------------------------------===//
-// MARK: - Bind Collection
-//===----------------------------------------------------------------------===//
-
-/// Provides a read/write access to the collection state type
-@MainActor @propertyWrapper
-public final class BindCollection<ID: Hashable, Value> {
-    public let wrappedValue: MutableCollectionStateAccess<ID, Value>
-    public init(wrappedValue: MutableCollectionStateAccess<ID, Value>) {
-        self.wrappedValue = wrappedValue
-    }
-}
+extension Observe: Injectable {}

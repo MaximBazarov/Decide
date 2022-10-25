@@ -46,6 +46,8 @@ public protocol StorageSystem {
         onBehalf ownerKey: StorageKey?
     ) throws -> T
 
+    @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?)
+
     /// Report to storage that keys were updated, so it can notify the observers or do any other required operation after a set of keys is written
     @MainActor func didUpdateKeys(_ keys: inout Set<StorageKey>)
 
@@ -79,13 +81,13 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
     }
 
     public func didUpdateKeys(_ keys: inout Set<StorageKey>) {
-        // notify observers
+        fatalError()
     }
 
     // MARK: Values
     private var values: [StorageKey: Any] = [:]
 
-    private func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
         values[key] = value
     }
 }
@@ -111,7 +113,8 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
     func read<T>(
         key: StorageKey,
         onBehalf ownerKey: StorageKey?,
-        defaultValue: DefaultValueProvider<T>
+        defaultValue: DefaultValueProvider<T>,
+        shouldStoreDefaultValue: Bool
     ) -> T {
         do {
             return try storage.getValue(
@@ -120,7 +123,9 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
             )
         } catch {
             let newValue = defaultValue()
-            writtenDefaultValues[key] = newValue
+            if shouldStoreDefaultValue {
+                writtenDefaultValues[key] = newValue
+            }
             return newValue
         }
     }

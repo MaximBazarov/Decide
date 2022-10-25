@@ -47,7 +47,7 @@ public extension StorageWriter {
 public extension StorageReader {
     func callAsFunction<T: AtomicState>(_ type: T.Type) -> T.Value {
         let key = StorageKey.atom(ObjectIdentifier(type))
-        return read(key: key, onBehalf: key, defaultValue: type.defaultValue)
+        return read(key: key, onBehalf: key, defaultValue: type.defaultValue, shouldStoreDefaultValue: true)
     }
 }
 

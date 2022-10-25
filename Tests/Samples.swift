@@ -21,10 +21,3 @@ let intDefaultValue: Int = 0xDEF017
 final class IntStateSample: AtomicState {
     static func defaultValue() -> Int { intDefaultValue }
 }
-
-final class ReadIntStateSample: Decision {
-    func execute(read: StorageReader, write: StorageWriter) -> Effect {
-        let _ = read(IntStateSample.self)
-        return NoOperation()
-    }
-}
