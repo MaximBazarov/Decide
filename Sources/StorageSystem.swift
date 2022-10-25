@@ -17,7 +17,9 @@
 import Foundation
 import Inject
 
+//===----------------------------------------------------------------------===//
 // MARK: - Storage Key
+//===----------------------------------------------------------------------===//
 
 /// A unique identifier of the state for the ``StorageSystem``
 public enum StorageKey: Hashable {
@@ -25,8 +27,10 @@ public enum StorageKey: Hashable {
     case collectionElement(ObjectIdentifier, AnyHashable)
 }
 
-
+//===----------------------------------------------------------------------===//
 // MARK: - Storage System
+//===----------------------------------------------------------------------===//
+
 /// Provides read/write access to the values by given ``StorageKey``
 /// Storage read/write operations must be performed on `@MainActor`
 public protocol StorageSystem {
@@ -42,18 +46,6 @@ public protocol StorageSystem {
         onBehalf ownerKey: StorageKey?
     ) throws -> T
 
-    /// Writes the value into the storage of the ``StorageSystem``.
-    /// - Parameters:
-    ///   - value: value to write
-    ///   - key: key for which the value should be written.
-    ///   - ownerKey: key of the writer of the value e.g when computation accesses the value, that computation will be the owner.
-    @MainActor func setValue<T>(
-        _ value: T,
-        for key: StorageKey,
-        onBehalf ownerKey: StorageKey?
-    )
-
-
     /// Report to storage that keys were updated, so it can notify the observers or do any other required operation after a set of keys is written
     @MainActor func didUpdateKeys(_ keys: inout Set<StorageKey>)
 
@@ -64,10 +56,43 @@ public protocol StorageSystem {
     @MainActor var storageWriter: StorageWriter { get }
 }
 
+//===----------------------------------------------------------------------===//
+// MARK: - Default Value Provider
+//===----------------------------------------------------------------------===//
+
 /// Provides a default value of type `T`
 public typealias DefaultValueProvider<T> = @MainActor () -> T
 
+//===----------------------------------------------------------------------===//
+// MARK: - In-memory Storage
+//===----------------------------------------------------------------------===//
+
+@MainActor public final class InMemoryStorage: StorageSystem {
+    // MARK: Interface
+    public var storageReader: StorageReader { StorageReader(storage: self) }
+    public var storageWriter: StorageWriter { StorageWriter(storage: self) }
+
+    public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
+        guard values.keys.contains(key) else { throw NoValueInStorage(key) }
+        guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
+        return value
+    }
+
+    public func didUpdateKeys(_ keys: inout Set<StorageKey>) {
+        // notify observers
+    }
+
+    // MARK: Values
+    private var values: [StorageKey: Any] = [:]
+
+    private func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+        values[key] = value
+    }
+}
+
+//===----------------------------------------------------------------------===//
 // MARK: - Storage Reader
+//===----------------------------------------------------------------------===//
 
 /// Reads the value from the storage at the provided key.
 /// ```swift
@@ -101,7 +126,9 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
     }
 }
 
+//===----------------------------------------------------------------------===//
 // MARK: - Storage Writer
+//===----------------------------------------------------------------------===//
 
 /// Writes the value into the storage for a provided key.
 /// ```swift
@@ -128,7 +155,9 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
     }
 }
 
-// MARK: - Error
+//===----------------------------------------------------------------------===//
+// MARK: - Errors
+//===----------------------------------------------------------------------===//
 
 /// Storage doesn't contain a value for the given key
 public final class NoValueInStorage: Error {
