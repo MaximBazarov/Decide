@@ -16,8 +16,33 @@
 
 import Decide
 
-let intDefaultValue: Int = 0xDEF017
+//===----------------------------------------------------------------------===//
+// MARK: - Int
+//===----------------------------------------------------------------------===//
+
+let intDefaultValue: Int = 0xDEFA17
 
 final class IntStateSample: AtomicState {
     static func defaultValue() -> Int { intDefaultValue }
+}
+
+let intStateKey = StorageKey.atom(ObjectIdentifier(IntStateSample.self))
+
+//===----------------------------------------------------------------------===//
+// MARK: - String
+//===----------------------------------------------------------------------===//
+
+let stringDefaultValue: String = "DEFAULT"
+final class StringStateSample: AtomicState {
+    static func defaultValue() -> String { stringDefaultValue }
+}
+
+let stringStateKey = StorageKey.atom(ObjectIdentifier(StringStateSample.self))
+
+//===----------------------------------------------------------------------===//
+// MARK: - Utility
+//===----------------------------------------------------------------------===//
+
+func id<T>(_ object: T) -> ObjectIdentifier {
+    ObjectIdentifier(object as AnyObject)
 }
