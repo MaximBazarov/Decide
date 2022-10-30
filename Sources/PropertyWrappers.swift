@@ -15,13 +15,17 @@
 //
 
 import Inject
+import Combine
+import SwiftUI
 
 //===----------------------------------------------------------------------===//
 // MARK: - Observe
 //===----------------------------------------------------------------------===//
 
 /// Provides an observed read-only access to the value of the atomic state type.
-@MainActor @propertyWrapper public final class Observe<Value> {
+@MainActor @propertyWrapper public final class Observe<Value>: ObservableObject, DynamicProperty {
+
+    public let objectWillChange = ObservableObjectPublisher()
 
     @Injected(
         \.decide.storage,
@@ -45,12 +49,10 @@ import Inject
 //===----------------------------------------------------------------------===//
 
 /// Provides an observed read/write access to the value of the atomic state type.
-@MainActor @propertyWrapper public final class Bind<Value> {
-    @Injected(
-        \.decide.storage,
-         lifespan: .permanent,
-         scope: .shared
-    ) var storage
+@MainActor @propertyWrapper public final class Bind<Value>: ObservableObject, DynamicProperty {
+    @Injected(\.decide.storage, lifespan: .permanent, scope: .shared) var storage
+
+    public let objectWillChange = ObservableObjectPublisher()
 
     public var wrappedValue: Value {
         get { getValue(storage.instance.storageReader) }
