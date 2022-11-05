@@ -25,7 +25,7 @@ import XCTest
 
     func test_EmptyStorage_mustThrow_NoValueInStorage() {
         let sut = InMemoryStorage()
-        let key = StorageKey.atom(ObjectIdentifier(IntStateSample.self))
+        let key = IntStateSample.key
         do {
             let _: Int = try sut.getValue(for: key, onBehalf: nil)
             XCTFail("Must not return value, before it was written.")
@@ -38,7 +38,7 @@ import XCTest
 
     func test_WrittenValue_mustReturn_writtenValue() {
         let sut = InMemoryStorage()
-        let key = StorageKey.atom(ObjectIdentifier(IntStateSample.self))
+        let key = IntStateSample.key
         sut.setValue(10, for: key, onBehalf: nil)
         let result: Int? = try? sut.getValue(for: key, onBehalf: nil)
         XCTAssertEqual(10, result)
@@ -95,9 +95,10 @@ import XCTest
         let storage = InMemoryStorage()
         _sut.storage.override(with: storage)
 
-        let writeGlobal = _global.storage.instance.storageWriter
-        let writeLocal = storage.storageWriter
-        let key = StorageKey.atom(ObjectIdentifier(IntStateSample.self))
+        let writeGlobal = StorageWriter(storage: _global.storage.instance)
+        let writeLocal = StorageWriter(storage: storage)
+
+        let key = IntStateSample.key
 
         writeGlobal.write(12, for: key, onBehalf: key)
         writeLocal.write(10, for: key, onBehalf: key)

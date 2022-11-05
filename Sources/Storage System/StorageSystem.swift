@@ -18,20 +18,11 @@ import Foundation
 import Inject
 
 //===----------------------------------------------------------------------===//
-// MARK: - Storage Key
-//===----------------------------------------------------------------------===//
-
-/// A unique identifier of the state for the ``StorageSystem``
-public enum StorageKey: Hashable {
-    case atom(ObjectIdentifier)
-    case collectionElement(ObjectIdentifier, AnyHashable)
-}
-
-//===----------------------------------------------------------------------===//
 // MARK: - Storage System
 //===----------------------------------------------------------------------===//
 
-/// Provides read/write access to the values by given ``StorageKey``
+/// Provides read/write access to the values by given ``StorageKey``.
+///
 /// Storage read/write operations must be performed on `@MainActor`
 public protocol StorageSystem {
 
@@ -50,12 +41,6 @@ public protocol StorageSystem {
 
     /// Report to storage that keys were updated, so it can notify the observers or do any other required operation after a set of keys is written
     @MainActor func didUpdateKeys(_ keys: inout Set<StorageKey>)
-
-    /// Must return a ``StorageReader`` for itself.
-    @MainActor var storageReader: StorageReader { get }
-
-    /// Must return a ``StorageWriter`` for itself.
-    @MainActor var storageWriter: StorageWriter { get }
 }
 
 //===----------------------------------------------------------------------===//

@@ -34,7 +34,7 @@ import SwiftUI
     ) var storage
 
     public var wrappedValue: Value {
-        get { getValue(storage.instance.storageReader) }
+        get { getValue(StorageReader(storage: storage.instance)) }
     }    
 
     private let getValue: @MainActor (StorageReader) -> Value
@@ -55,8 +55,8 @@ import SwiftUI
     public let objectWillChange = ObservableObjectPublisher()
 
     public var wrappedValue: Value {
-        get { getValue(storage.instance.storageReader) }
-        set { setValue(storage.instance.storageWriter, newValue) }
+        get { getValue(StorageReader(storage: storage.instance)) }
+        set { setValue(StorageWriter(storage: storage.instance), newValue) }
     }
 
     private let getValue: @MainActor (StorageReader) -> Value

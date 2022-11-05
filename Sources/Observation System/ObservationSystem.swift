@@ -35,7 +35,6 @@ import Combine
 
     func didChangeValue(for keys: Set<StorageKey>) {
         keys.forEach { key in
-            print(key)
             guard let refs = observations[key]
             else { return }
             refs.forEach({ ref in
