@@ -32,11 +32,15 @@ public protocol AtomicState {
 //===----------------------------------------------------------------------===//
 // MARK: - Writer
 //===----------------------------------------------------------------------===//
+extension AtomicState {
+    static var key: StorageKey {
+        StorageKey(type: Self.self, additionalKeys: [])
+    }
+}
 
 public extension StorageWriter {
     func callAsFunction<T: AtomicState>(_ value: T.Value, into type: T.Type) {
-        let key = StorageKey.atom(ObjectIdentifier(type))
-        write(value, for: key, onBehalf: key)
+        write(value, for: type.key, onBehalf: type.key)
     }
 }
 
@@ -46,8 +50,7 @@ public extension StorageWriter {
 
 public extension StorageReader {
     func callAsFunction<T: AtomicState>(_ type: T.Type) -> T.Value {
-        let key = StorageKey.atom(ObjectIdentifier(type))
-        return read(key: key, onBehalf: key, defaultValue: type.defaultValue, shouldStoreDefaultValue: true)
+        return read(key: type.key, onBehalf: type.key, defaultValue: type.defaultValue, shouldStoreDefaultValue: true)
     }
 }
 

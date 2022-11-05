@@ -23,11 +23,11 @@ import Combine
     func test_Subscribe_mustAdd_Publisher() {
         let sut = ObservationSystem()
         let publisher = ObservableObjectPublisher()
-        sut.subscribe(publisher: publisher, for: intStateKey)
+        sut.subscribe(publisher: publisher, for: IntStateSample.key)
 
-        XCTAssert(sut.observations[intStateKey]?.count == 1)
+        XCTAssert(sut.observations[IntStateSample.key]?.count == 1)
         let storedPublisher: ObservableObjectPublisher = sut
-            .observations[intStateKey]!
+            .observations[IntStateSample.key]!
             .first!
             .value!
 
@@ -39,11 +39,11 @@ import Combine
         let publisher1 = ObservableObjectPublisher()
         let publisher2 = ObservableObjectPublisher()
 
-        sut.subscribe(publisher: publisher1, for: intStateKey)
-        sut.subscribe(publisher: publisher2, for: intStateKey)
+        sut.subscribe(publisher: publisher1, for: IntStateSample.key)
+        sut.subscribe(publisher: publisher2, for: IntStateSample.key)
 
-        XCTAssert(sut.observations[intStateKey]?.count == 2)
-        let keyObservations = sut.observations[intStateKey]!
+        XCTAssert(sut.observations[IntStateSample.key]?.count == 2)
+        let keyObservations = sut.observations[IntStateSample.key]!
 
         XCTAssertTrue(
             keyObservations.contains { ref in
@@ -62,11 +62,12 @@ import Combine
         let publisher1 = ObservableObjectPublisher()
         let publisher2 = ObservableObjectPublisher()
 
-        sut.subscribe(publisher: publisher1, for: intStateKey)
-        sut.subscribe(publisher: publisher2, for: intStateKey)
-        sut.didChangeValue(for: Set([intStateKey]))
+        sut.subscribe(publisher: publisher1, for: IntStateSample.key)
+        sut.subscribe(publisher: publisher2, for: IntStateSample.key)
+        
+        sut.didChangeValue(for: Set([IntStateSample.key]))
 
-        XCTAssertFalse(sut.observations.keys.contains(intStateKey))
+        XCTAssertFalse(sut.observations.keys.contains(IntStateSample.key))
         XCTAssertTrue(sut.observations.keys.count == 0)
     }
 
@@ -76,13 +77,13 @@ import Combine
         let publisherKeep = ObservableObjectPublisher()
         let publisherRemove = ObservableObjectPublisher()
 
-        sut.subscribe(publisher: publisherKeep, for: stringStateKey)
-        sut.subscribe(publisher: publisherRemove, for: intStateKey)
+        sut.subscribe(publisher: publisherKeep, for: StringStateSample.key)
+        sut.subscribe(publisher: publisherRemove, for: IntStateSample.key)
 
-        sut.didChangeValue(for: Set([intStateKey]))
+        sut.didChangeValue(for: Set([IntStateSample.key]))
 
-        XCTAssertFalse(sut.observations.keys.contains(intStateKey))
-        XCTAssertTrue(sut.observations.keys.contains(stringStateKey))
+        XCTAssertFalse(sut.observations.keys.contains(IntStateSample.key))
+        XCTAssertTrue(sut.observations.keys.contains(StringStateSample.key))
 
         XCTAssertTrue(sut.observations.keys.count == 1)
     }

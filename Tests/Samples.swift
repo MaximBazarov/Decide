@@ -26,8 +26,6 @@ final class IntStateSample: AtomicState {
     static func defaultValue() -> Int { intDefaultValue }
 }
 
-let intStateKey = StorageKey.atom(ObjectIdentifier(IntStateSample.self))
-
 //===----------------------------------------------------------------------===//
 // MARK: - String
 //===----------------------------------------------------------------------===//
@@ -37,7 +35,6 @@ final class StringStateSample: AtomicState {
     static func defaultValue() -> String { stringDefaultValue }
 }
 
-let stringStateKey = StorageKey.atom(ObjectIdentifier(StringStateSample.self))
 
 //===----------------------------------------------------------------------===//
 // MARK: - Utility
