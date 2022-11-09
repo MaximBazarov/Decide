@@ -1,6 +1,6 @@
 # Decide
 
-Effortless modular application state management with automatic dependency graph and Decision -> Effect -> Decision mutability.
+Modular state and side-effects system for your swift application.
 
 Decide focuses on the best performance while keeping it modular and simple for developers to use. 
 
