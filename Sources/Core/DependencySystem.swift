@@ -71,6 +71,7 @@ extension DependencyGraph {
         guard let keyDependencies = dependencies[key]
         else { return }
 
+        // TODO: Report found cycles.
         queue.enqueue(keyDependencies.filter { !result.contains($0) })
 
         while let next = queue.dequeue() {
@@ -85,7 +86,7 @@ extension DependencyGraph {
 
 private extension DependencyGraph {
     final class Queue {
-        private(set) var values: Set<   StorageKey> = .init()
+        private(set) var values: Set<StorageKey> = .init()
         private(set) var count: UInt = 0
 
         func dequeue() -> StorageKey? {

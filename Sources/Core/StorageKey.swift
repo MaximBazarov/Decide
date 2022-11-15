@@ -22,11 +22,6 @@ import Foundation
 /// A unique (during session) identifier of the value in the ``StorageSystem``.
 /// The identifier will not necessarily be the same among app instances/sessions.
 public final class StorageKey: Hashable, CustomDebugStringConvertible {
-    public var debugDescription: String {
-        let id = Self.stripTypes(typeKey)
-        return "\(_typeName) \(id)"
-    }
-
     let typeKey: AnyHashable
     let additionalKeys: [AnyHashable]
 
@@ -39,8 +34,9 @@ public final class StorageKey: Hashable, CustomDebugStringConvertible {
     }
 }
 
+
 //===----------------------------------------------------------------------===//
-// MARK: Hashable
+// MARK: Hashable (Equitable)
 //===----------------------------------------------------------------------===//
 
 public extension StorageKey {
@@ -49,10 +45,6 @@ public extension StorageKey {
         additionalKeys.forEach { hasher.combine($0) }
     }
 }
-
-//===----------------------------------------------------------------------===//
-// MARK: Equitable
-//===----------------------------------------------------------------------===//
 
 public extension StorageKey {
     static func == (lhs: StorageKey, rhs: StorageKey) -> Bool {
@@ -73,6 +65,11 @@ public extension StorageKey {
 //===----------------------------------------------------------------------===//
 
 extension StorageKey {
+    public var debugDescription: String {
+        let id = Self.stripTypes(typeKey)
+        return "\(_typeName) \(id)"
+    }
+
     static func stripTypes(_ value: AnyHashable) -> String {
         value
             .debugDescription

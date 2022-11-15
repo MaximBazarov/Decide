@@ -17,8 +17,24 @@
 import Inject
 import Combine
 
-@MainActor public protocol Decision {}
-@MainActor public protocol Effect {}
+
+//===----------------------------------------------------------------------===//
+// MARK: - Decision
+//===----------------------------------------------------------------------===//
+
+@MainActor public protocol Decision {
+
+}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Effect
+//===----------------------------------------------------------------------===//
+
+@MainActor public protocol Effect {
+
+}
+
 
 //===----------------------------------------------------------------------===//
 // MARK: - Decision Executor Protocol
@@ -30,7 +46,6 @@ import Combine
     /// Executes the ``Decision`` and produced by it ``Effect``s.
     /// - Parameter decision: Decision to execute
     func execute<D: Decision>(_ decision: D /*, context: Context*/)
-
 
     /// Returns a ``StorageReader`` configured for the enclosed ``StorageSystem``.
     func reader(/*context: Context*/) -> StorageReader
@@ -44,12 +59,13 @@ import Combine
 
 
 //===----------------------------------------------------------------------===//
-// MARK: - Decision Core Public interface
+// MARK: - Decision Core (Default)
 //===----------------------------------------------------------------------===//
 
+// MARK: Public
 public extension DecisionCore {
     func execute<D>(_ decision: D) where D : Decision {
-        
+
     }
 
     func writer() -> StorageWriter { _writer }
@@ -59,11 +75,7 @@ public extension DecisionCore {
     }
 }
 
-
-//===----------------------------------------------------------------------===//
-// MARK: - Decision Core (Default)
-//===----------------------------------------------------------------------===//
-
+// MARK: Private
 @MainActor public final class DecisionCore: DecisionExecutor {
     let _storage: StorageSystem
     let _dependencies: DependencySystem
@@ -145,22 +157,21 @@ public extension DecisionCore {
 @MainActor public final class StorageWriter {
     var storage: StorageSystem
     var dependencies: DependencySystem
-    
+
     init(storage: StorageSystem, dependencies: DependencySystem) {
         self.storage = storage
         self.dependencies = dependencies
     }
 
-    private var writtenKeys: [StorageKey] = []
+    private var writtenKeys: Set<StorageKey> = []
 
-    func popKeys() -> [StorageKey] {
+    func popKeys() -> Set<StorageKey> {
         defer { writtenKeys = [] }
         return writtenKeys
     }
 
     func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
-        writtenKeys.append(key)
+        writtenKeys.insert(key)
         storage.setValue(value, for: key, onBehalf: owner)
     }
 }
-

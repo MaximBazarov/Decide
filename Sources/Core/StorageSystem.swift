@@ -38,9 +38,6 @@ public protocol StorageSystem {
     ) throws -> T
 
     @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?)
-
-    /// Report to storage that keys were updated, so it can notify the observers or do any other required operation after a set of keys is written
-    @MainActor func didUpdateKeys(_ keys: inout Set<StorageKey>)
 }
 
 //===----------------------------------------------------------------------===//
@@ -55,25 +52,18 @@ public typealias ValueProvider<T> = @MainActor () -> T
 //===----------------------------------------------------------------------===//
 
 @MainActor final class InMemoryStorage: StorageSystem {
-
-    @MainActor public init() {}
-
     public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
         guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
         return value
     }
 
-    public func didUpdateKeys(_ keys: inout Set<StorageKey>) {
-        fatalError()
+    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+        values[key] = value
     }
 
     // MARK: Values
     private var values: [StorageKey: Any] = [:]
-
-    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
-        values[key] = value
-    }
 }
 
 //===----------------------------------------------------------------------===//
