@@ -16,15 +16,22 @@
 
 import Foundation
 
+
+//===----------------------------------------------------------------------===//
+// MARK: - Dependency System Protocol
+//===----------------------------------------------------------------------===//
+
 @MainActor public protocol DependencySystem {
     func add(dependency: StorageKey, thatInvalidates key: StorageKey)
     func popDependencies(of key: StorageKey) -> Set<StorageKey>
 }
 
-@MainActor final class DependencyGraph: DependencySystem {
 
-    var dependencies: [StorageKey: Set<StorageKey>] = [:]
+//===----------------------------------------------------------------------===//
+// MARK: - Dependency Graph (Default)
+//===----------------------------------------------------------------------===//
 
+extension DependencyGraph {
     /// Makes `key`, depending on `dependency`
     /// - Parameters:
     ///   - dependency: the key on invalidating of which `key` will be invalidated.
@@ -38,7 +45,7 @@ import Foundation
         dependencies[dependency]?.insert(key)
     }
 
-    /// Recursively traverses the dependency graph removes and returns all the keys that depend on the given `key`.
+    /// Recursively traverses (BFS) the dependency graph removes and returns all the keys that depend on the given `key`.
     ///
     /// - Parameters:
     ///   - key: key for which return dependencies
@@ -53,7 +60,10 @@ import Foundation
         dependencies.removeValue(forKey: key)
         return result
     }
+}
 
+@MainActor final class DependencyGraph: DependencySystem {
+    var dependencies: [StorageKey: Set<StorageKey>] = [:]
 
     private func pop(for key: StorageKey, into result: inout Set<StorageKey>, queue: inout Queue) {
         result.insert(key)
@@ -67,7 +77,13 @@ import Foundation
             pop(for: next, into: &result, queue: &queue)
         }
     }
+}
 
+//===----------------------------------------------------------------------===//
+// MARK: - Queue
+//===----------------------------------------------------------------------===//
+
+private extension DependencyGraph {
     final class Queue {
         private(set) var values: Set<   StorageKey> = .init()
         private(set) var count: UInt = 0

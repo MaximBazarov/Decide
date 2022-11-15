@@ -54,7 +54,7 @@ public typealias ValueProvider<T> = @MainActor () -> T
 // MARK: - In-memory Storage (Default)
 //===----------------------------------------------------------------------===//
 
-@MainActor public final class InMemoryStorage: StorageSystem {
+@MainActor final class InMemoryStorage: StorageSystem {
 
     @MainActor public init() {}
 

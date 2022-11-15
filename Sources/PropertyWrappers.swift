@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -24,30 +24,26 @@ import SwiftUI
 
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Observe<Value>: ObservableObject, DynamicProperty {
+    public let objectWillChange = ObservableObjectPublisher()
+    public var wrappedValue: Value {
+        get {
+            core.instance.subscribe(publisher: objectWillChange, for: key)
+            return getValue(reader)
+        }
+    }
 
     @Injected(\.decisionCore) var core
 
-    public let objectWillChange = ObservableObjectPublisher()
-
-    let key: StorageKey
-
-    public var wrappedValue: Value {
-        get {
-            core.instance.observation.subscribe(publisher: objectWillChange, for: key)
-            return getValue(reader)
-        }
-    }    
-
-    var reader: StorageReader {
+    private var reader: StorageReader {
         core.instance.reader()
     }
+    private let key: StorageKey
+    private let getValue: @MainActor (StorageReader) -> Value
 
     init(key: StorageKey, getValue: @MainActor @escaping (StorageReader) -> Value) {
         self.getValue = getValue
         self.key = key
     }
-
-    private let getValue: @MainActor (StorageReader) -> Value
 }
 
 //===----------------------------------------------------------------------===//
@@ -83,3 +79,4 @@ import SwiftUI
 }
 
 extension Observe: Injectable {}
+

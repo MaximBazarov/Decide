@@ -19,7 +19,8 @@ import Foundation
 // MARK: - Storage Key
 //===----------------------------------------------------------------------===//
 
-/// A unique identifier of the value in the ``StorageSystem``
+/// A unique (during session) identifier of the value in the ``StorageSystem``.
+/// The identifier will not necessarily be the same among app instances/sessions.
 public final class StorageKey: Hashable, CustomDebugStringConvertible {
     public var debugDescription: String {
         let id = Self.stripTypes(typeKey)

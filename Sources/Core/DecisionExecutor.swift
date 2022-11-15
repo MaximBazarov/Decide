@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -15,6 +15,7 @@
 //
 
 import Inject
+import Combine
 
 @MainActor public protocol Decision {}
 @MainActor public protocol Effect {}
@@ -23,27 +24,46 @@ import Inject
 // MARK: - Decision Executor Protocol
 //===----------------------------------------------------------------------===//
 
-/// Executes decisions ``Decision``
+/// Core class that combines ``StorageSystem``, ``DependencySystem`` and ``ObservationSystem`` to execute ``Decision`` and produced by it ``Effect``
 @MainActor public protocol DecisionExecutor {
-    func reader(/*context: Context*/) -> StorageReader
-    func writer(/*context: Context*/) -> StorageWriter
+
+    /// Executes the ``Decision`` and produced by it ``Effect``s.
+    /// - Parameter decision: Decision to execute
     func execute<D: Decision>(_ decision: D /*, context: Context*/)
-    var observation: ObservationSystem { get }
+
+
+    /// Returns a ``StorageReader`` configured for the enclosed ``StorageSystem``.
+    func reader(/*context: Context*/) -> StorageReader
+
+    /// Returns a ``StorageWriter`` configured for the enclosed ``StorageSystem``.
+    func writer(/*context: Context*/) -> StorageWriter
+
+    /// Adds provided publisher as to be notified when value at given ``StorageKey`` changes.
+    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey)
 }
+
 
 //===----------------------------------------------------------------------===//
 // MARK: - Decision Core Public interface
 //===----------------------------------------------------------------------===//
+
 public extension DecisionCore {
-    var observation: ObservationSystem { _observation }
-    func execute<D>(_ decision: D) where D : Decision {}
+    func execute<D>(_ decision: D) where D : Decision {
+        
+    }
+
     func writer() -> StorageWriter { _writer }
     func reader() -> StorageReader { _reader }
+    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey) {
+        _observation.subscribe(publisher: publisher, for: key)
+    }
 }
+
 
 //===----------------------------------------------------------------------===//
 // MARK: - Decision Core (Default)
 //===----------------------------------------------------------------------===//
+
 @MainActor public final class DecisionCore: DecisionExecutor {
     let _storage: StorageSystem
     let _dependencies: DependencySystem
@@ -112,6 +132,7 @@ public extension DecisionCore {
     }
 }
 
+
 //===----------------------------------------------------------------------===//
 // MARK: - Storage Writer
 //===----------------------------------------------------------------------===//
@@ -124,7 +145,7 @@ public extension DecisionCore {
 @MainActor public final class StorageWriter {
     var storage: StorageSystem
     var dependencies: DependencySystem
-
+    
     init(storage: StorageSystem, dependencies: DependencySystem) {
         self.storage = storage
         self.dependencies = dependencies
@@ -142,3 +163,4 @@ public extension DecisionCore {
         storage.setValue(value, for: key, onBehalf: owner)
     }
 }
+
