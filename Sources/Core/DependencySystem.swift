@@ -96,7 +96,7 @@ private extension DependencyGraph {
             return value
         }
 
-        func enqueue(_ keys: any Collection<StorageKey>) {
+        func enqueue(_ keys: Set<StorageKey>) {
             values.formUnion(keys)
             count = UInt(values.count)
         }
