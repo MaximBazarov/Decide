@@ -49,9 +49,13 @@ import XCTest
     //===----------------------------------------------------------------------===//
 
     func test_StorageReader_AtomicState_mustReturn_defaultValue() {
-        let sut = InMemoryStorage()
+        let storage = InMemoryStorage()
+        let dependencies = DependencyGraph()        
+        let sut = DecisionCore(storage: storage, dependencies: dependencies)
 
-        let result = sut.storageReader(IntStateSample.self)
+        let read = sut.reader()
+
+        let result = read(IntStateSample.self)
 
         XCTAssertEqual(intDefaultValue, result)
     }
@@ -59,8 +63,8 @@ import XCTest
     func test_StorageReader_AtomicState_WrittenValue_mustReturn_writtenValue() {
         let sut = InMemoryStorage()
 
-        sut.storageWriter(10, into: IntStateSample.self)
-        let result = sut.storageReader(IntStateSample.self)
+        sut.setValue(10, for: IntStateSample.key, onBehalf: nil)
+        let result: Int? = try? sut.getValue(for: IntStateSample.key, onBehalf: nil)
 
         XCTAssertEqual(10, result)
     }
@@ -84,27 +88,6 @@ import XCTest
         XCTAssertEqual(11, sut.bind)
     }
 
-    //===----------------------------------------------------------------------===//
-    // MARK: - Storage Injection Tests
-    //===----------------------------------------------------------------------===//
-
-    func test_Observe_Storage_Override_mustHave_LocalStorage() {
-        @Observe(IntStateSample.self) var sut;
-        @Observe(IntStateSample.self) var global;
-
-        let storage = InMemoryStorage()
-        _sut.storage.override(with: storage)
-
-        let writeGlobal = StorageWriter(storage: _global.storage.instance)
-        let writeLocal = StorageWriter(storage: storage)
-
-        let key = IntStateSample.key
-
-        writeGlobal.write(12, for: key, onBehalf: key)
-        writeLocal.write(10, for: key, onBehalf: key)
-
-        XCTAssertEqual(10, sut)
-    }
 
     //===----------------------------------------------------------------------===//
     // MARK: - Consumer
@@ -115,10 +98,13 @@ import XCTest
         @Observe(IntStateSample.self) var observe
 
         let storage = InMemoryStorage()
+        let dependencies = DependencyGraph()
+
+        lazy var core: DecisionExecutor = DecisionCore(storage: storage, dependencies: dependencies)
 
         init() {
-            _bind.storage.override(with: storage)
-            _observe.storage.override(with: storage)
+            _bind.core.override(with: core)
+            _observe.core.override(with: core)
         }
 
         func writeStateValue(_ value: Int) {

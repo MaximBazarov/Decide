@@ -17,13 +17,13 @@
 import XCTest
 @testable import Decide
 
-@MainActor final class DependencyGraphTests: XCTestCase {
+@MainActor final class DependencySystemTests: XCTestCase {
 
     func test_Graph_pop_mustReturn_allDependencies() {
         let sut = DependencyGraph()
         sut.mock_ABCDEF_ABCA_cycle()
 
-        let result = sut.pop(for: C.key)
+        let result = sut.popDependencies(of: C.key)
 
         let expected = Set([
             A.key, B.key, C.key, D.key, E.key, F.key

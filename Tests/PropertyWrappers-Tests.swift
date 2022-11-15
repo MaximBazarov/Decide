@@ -64,5 +64,28 @@ import Decide
              - swap elements
              - element change
              - += -= etc operators
+
+
+     //===----------------------------------------------------------------------===//
+     // MARK: - Storage Injection Tests
+     //===----------------------------------------------------------------------===//
+
+     func test_Observe_Storage_Override_mustHave_LocalStorage() {
+     @Observe(IntStateSample.self) var sut;
+     @Observe(IntStateSample.self) var global;
+
+     let storage = InMemoryStorage()
+     _sut.storage.override(with: storage)
+
+     let writeGlobal = StorageWriter(storage: _global.storage.instance)
+     let writeLocal = StorageWriter(storage: storage)
+
+     let key = IntStateSample.key
+
+     writeGlobal.write(12, for: key, onBehalf: key)
+     writeLocal.write(10, for: key, onBehalf: key)
+
+     XCTAssertEqual(10, sut)
+     }
      */
 }

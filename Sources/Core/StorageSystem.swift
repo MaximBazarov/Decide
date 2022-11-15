@@ -44,20 +44,19 @@ public protocol StorageSystem {
 }
 
 //===----------------------------------------------------------------------===//
-// MARK: - Default Value Provider
+// MARK: - Value Provider
 //===----------------------------------------------------------------------===//
 
 /// Provides a default value of type `T`
-public typealias DefaultValueProvider<T> = @MainActor () -> T
+public typealias ValueProvider<T> = @MainActor () -> T
 
 //===----------------------------------------------------------------------===//
-// MARK: - In-memory Storage
+// MARK: - In-memory Storage (Default)
 //===----------------------------------------------------------------------===//
 
 @MainActor public final class InMemoryStorage: StorageSystem {
-    // MARK: Interface
-    public var storageReader: StorageReader { StorageReader(storage: self) }
-    public var storageWriter: StorageWriter { StorageWriter(storage: self) }
+
+    @MainActor public init() {}
 
     public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
@@ -74,74 +73,6 @@ public typealias DefaultValueProvider<T> = @MainActor () -> T
 
     public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
         values[key] = value
-    }
-}
-
-//===----------------------------------------------------------------------===//
-// MARK: - Storage Reader
-//===----------------------------------------------------------------------===//
-
-/// Reads the value from the storage at the provided key.
-/// ```swift
-/// // read: StorageReader
-/// let x = read(SomeState.self)
-/// // x: SomeState.Value
-/// ```
-@MainActor public final class StorageReader {
-    var storage: StorageSystem
-    var writtenDefaultValues: [StorageKey: Any] = [:]
-
-    public init(storage: StorageSystem) {
-        self.storage = storage
-    }
-
-    func read<T>(
-        key: StorageKey,
-        onBehalf ownerKey: StorageKey?,
-        defaultValue: DefaultValueProvider<T>,
-        shouldStoreDefaultValue: Bool
-    ) -> T {
-        do {
-            return try storage.getValue(
-                for: key,
-                onBehalf: ownerKey
-            )
-        } catch {
-            let newValue = defaultValue()
-            if shouldStoreDefaultValue {
-                writtenDefaultValues[key] = newValue
-            }
-            return newValue
-        }
-    }
-}
-
-//===----------------------------------------------------------------------===//
-// MARK: - Storage Writer
-//===----------------------------------------------------------------------===//
-
-/// Writes the value into the storage for a provided key.
-/// ```swift
-/// // write: StorageWriter
-/// write(x, into: SomeState.self)
-/// ```
-@MainActor public final class StorageWriter {
-    var storage: StorageSystem
-
-    public init(storage: StorageSystem) {
-        self.storage = storage
-    }
-
-    private var writtenKeys: [StorageKey] = []
-
-    func popKeys() -> [StorageKey] {
-        defer { writtenKeys = [] }
-        return writtenKeys
-    }
-
-    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
-        writtenKeys.append(key)
-        storage.setValue(value, for: key, onBehalf: owner)
     }
 }
 

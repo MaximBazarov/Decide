@@ -15,11 +15,12 @@
 //
 
 import Combine
-
+import Inject
 
 /// Keyed with ``StorageKey`` set weak references to `ObservableObjectPublisher`
-@MainActor final class ObservationSystem {
-     var observations: [StorageKey: Set<WeakRefPublisher>] = [:]
+@MainActor public final class ObservationSystem {
+
+    var observations: [StorageKey: Set<WeakRefPublisher>] = [:]
 
     func subscribe(
         publisher: ObservableObjectPublisher,
@@ -41,7 +42,7 @@ import Combine
                 ref.value?.send()
             })
         }
-    
+
         keys.forEach{ observations.removeValue(forKey: $0) }
     }
 }

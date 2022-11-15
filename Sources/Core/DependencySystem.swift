@@ -16,7 +16,12 @@
 
 import Foundation
 
-@MainActor final class DependencyGraph {
+@MainActor public protocol DependencySystem {
+    func add(dependency: StorageKey, thatInvalidates key: StorageKey)
+    func popDependencies(of key: StorageKey) -> Set<StorageKey>
+}
+
+@MainActor final class DependencyGraph: DependencySystem {
 
     var dependencies: [StorageKey: Set<StorageKey>] = [:]
 
@@ -38,7 +43,7 @@ import Foundation
     /// - Parameters:
     ///   - key: key for which return dependencies
     ///   - result: All the dependencies of the key, recursively.
-    func pop(for key: StorageKey) -> Set<StorageKey> {
+    func popDependencies(of key: StorageKey) -> Set<StorageKey> {
         var result = Set<StorageKey>([key])
         var queue = Queue()
         pop(for: key, into: &result, queue: &queue)
@@ -57,7 +62,6 @@ import Foundation
         else { return }
 
         queue.enqueue(keyDependencies.filter { !result.contains($0) })
-        print("DEBUG: Queue size: \(queue.count)")
 
         while let next = queue.dequeue() {
             pop(for: next, into: &result, queue: &queue)
@@ -65,7 +69,7 @@ import Foundation
     }
 
     final class Queue {
-        private(set) var values: Set<StorageKey> = .init()
+        private(set) var values: Set<   StorageKey> = .init()
         private(set) var count: UInt = 0
 
         func dequeue() -> StorageKey? {
