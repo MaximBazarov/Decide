@@ -23,7 +23,7 @@ import Combine
 //===----------------------------------------------------------------------===//
 
 @MainActor public protocol Decision {
-
+    func execute(read: StorageReader, write: StorageWriter) -> Effect
 }
 
 
@@ -31,8 +31,8 @@ import Combine
 // MARK: - Effect
 //===----------------------------------------------------------------------===//
 
-@MainActor public protocol Effect {
-
+public protocol Effect {
+    func perform() async -> Decision
 }
 
 
@@ -45,7 +45,7 @@ import Combine
 
     /// Executes the ``Decision`` and produced by it ``Effect``s.
     /// - Parameter decision: Decision to execute
-    func execute<D: Decision>(_ decision: D /*, context: Context*/)
+    func execute(_ decision: Decision /*, context: Context*/)
 
     /// Returns a ``StorageReader`` configured for the enclosed ``StorageSystem``.
     func reader(/*context: Context*/) -> StorageReader
@@ -64,20 +64,44 @@ import Combine
 
 // MARK: Public
 public extension DecisionCore {
-    func execute<D>(_ decision: D) where D : Decision {
+    func execute(_ decision: Decision) {
+        var updatedKeys: Set<StorageKey> = []
+        _reader.onWrite = { updatedKeys.insert($0) }
+        _writer.onWrite = { updatedKeys.insert($0) }
 
+        // log decision execution started:
+        let effect = decision.execute(read: _reader, write: _writer)
+        // log decision execution finished:
+
+        // log dependencies calculation started: (Decision)
+        let updated = updatedKeys
+                .flatMap { _dependencies.popDependencies(of: $0) }
+        // log dependencies calculation finished: (Decision) invalidated keys count (count)
+
+        // log notification started: (Decision): (count) keys observers notified, payload, set of keys updated
+        _observation.didChangeValue(for: Set<StorageKey>(updated))
+        // log notification finished: (Decision)
+
+        // log effect execution started: effect
+        Task(priority: .background) { [execute] in
+            let decision = await effect.perform()
+            // log effect execution finished: effect
+            execute(decision)
+        }
     }
 
     func writer() -> StorageWriter { _writer }
     func reader() -> StorageReader { _reader }
     func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey) {
+        // log publisher subscribed to key started
         _observation.subscribe(publisher: publisher, for: key)
+        // log publisher subscribed to key finished (publisher) observes (key)
     }
 }
 
 // MARK: Private
 @MainActor public final class DecisionCore: DecisionExecutor {
-    let _storage: StorageSystem
+    private let _storage: StorageSystem
     let _dependencies: DependencySystem
     let _observation: ObservationSystem
     let _reader: StorageReader
@@ -95,83 +119,5 @@ public extension DecisionCore {
         _observation = observation
         _reader = StorageReader(storage: storage, dependencies: dependencies)
         _writer = StorageWriter(storage: storage, dependencies: dependencies)
-    }
-}
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Storage Reader
-//===----------------------------------------------------------------------===//
-
-/// Reads the value from the storage at the provided key.
-/// ```swift
-/// // read: StorageReader
-/// let x = read(SomeState.self)
-/// // x: SomeState.Value
-/// ```
-@MainActor public final class StorageReader {
-
-    var storage: StorageSystem
-    var dependencies: DependencySystem
-
-    init(storage: StorageSystem, dependencies: DependencySystem) {
-        self.storage = storage
-        self.dependencies = dependencies
-    }
-
-    func read<T>(
-        key: StorageKey,
-        onBehalf ownerKey: StorageKey?,
-        fallbackValue: ValueProvider<T>,
-        shouldStoreDefaultValue: Bool
-    ) -> T {
-        do {
-            if let owner = ownerKey, key != owner {
-                dependencies.add(dependency: owner, thatInvalidates: key)
-            }
-
-            return try storage.getValue(
-                for: key,
-                onBehalf: ownerKey
-            )
-        } catch {
-            let newValue = fallbackValue()
-            if shouldStoreDefaultValue {
-                storage.setValue(newValue, for: key, onBehalf: key)
-            }
-            return newValue
-        }
-    }
-}
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Storage Writer
-//===----------------------------------------------------------------------===//
-
-/// Writes the value into the storage for a provided key.
-/// ```swift
-/// // write: StorageWriter
-/// write(x, into: SomeState.self)
-/// ```
-@MainActor public final class StorageWriter {
-    var storage: StorageSystem
-    var dependencies: DependencySystem
-
-    init(storage: StorageSystem, dependencies: DependencySystem) {
-        self.storage = storage
-        self.dependencies = dependencies
-    }
-
-    private var writtenKeys: Set<StorageKey> = []
-
-    func popKeys() -> Set<StorageKey> {
-        defer { writtenKeys = [] }
-        return writtenKeys
-    }
-
-    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
-        writtenKeys.insert(key)
-        storage.setValue(value, for: key, onBehalf: owner)
     }
 }
