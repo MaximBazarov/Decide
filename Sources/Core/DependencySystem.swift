@@ -21,7 +21,7 @@ import Foundation
 // MARK: - Dependency System Protocol
 //===----------------------------------------------------------------------===//
 
-@MainActor public protocol DependencySystem {
+@MainActor protocol DependencySystem {
     func add(dependency: StorageKey, thatInvalidates key: StorageKey)
     func popDependencies(of key: StorageKey) -> Set<StorageKey>
 }

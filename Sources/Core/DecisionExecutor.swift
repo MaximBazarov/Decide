@@ -22,7 +22,16 @@ import Combine
 // MARK: - Decision
 //===----------------------------------------------------------------------===//
 
+
 @MainActor public protocol Decision {
+    /// Describes how decision has to be executed.
+    /// Applying state changes using read/write.
+    /// All heavy or asynchronous work **must** be isolated in produced ``Effect``.
+    ///
+    /// - Parameters:
+    ///   - read: Connected to the ``StorageSystem`` and configured ``StorageReader``.
+    ///   - write: Connected to the ``StorageSystem`` and configured ``StorageWriter``.
+    /// - Returns: Effect with enclosed heavy/async job.
     func execute(read: StorageReader, write: StorageWriter) -> Effect
 }
 
@@ -32,6 +41,10 @@ import Combine
 //===----------------------------------------------------------------------===//
 
 public protocol Effect {
+
+    /// Encloses the asynchronous execution.
+    /// Produces the ``Decision`` that describes the state updates with the result.
+    /// - Returns: Decision that describes state updates required after the async execution.
     func perform() async -> Decision
 }
 
@@ -40,7 +53,7 @@ public protocol Effect {
 // MARK: - Decision Executor Protocol
 //===----------------------------------------------------------------------===//
 
-/// Core class that combines ``StorageSystem``, ``DependencySystem`` and ``ObservationSystem`` to execute ``Decision`` and produced by it ``Effect``
+/// Core class that combines ``StorageSystem``, `DependencySystem` and `ObservationSystem` to execute ``Decision`` and produced by it ``Effect``
 @MainActor public protocol DecisionExecutor {
 
     /// Executes the ``Decision`` and produced by it ``Effect``s.
@@ -64,7 +77,7 @@ public protocol Effect {
 
 // MARK: Public
 public extension DecisionCore {
-    func execute(_ decision: Decision) {
+    @MainActor func execute(_ decision: Decision) {
         var updatedKeys: Set<StorageKey> = []
         _reader.onWrite = { updatedKeys.insert($0) }
         _writer.onWrite = { updatedKeys.insert($0) }
@@ -73,9 +86,11 @@ public extension DecisionCore {
         let effect = decision.execute(read: _reader, write: _writer)
         // log decision execution finished:
 
+        // TODO: Performance Tests on a big graphs with a lot of connections
         // log dependencies calculation started: (Decision)
         let updated = updatedKeys
-                .flatMap { _dependencies.popDependencies(of: $0) }
+            .union(updatedKeys
+                .flatMap { _dependencies.popDependencies(of: $0) })
         // log dependencies calculation finished: (Decision) invalidated keys count (count)
 
         // log notification started: (Decision): (count) keys observers notified, payload, set of keys updated
