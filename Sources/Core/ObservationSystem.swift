@@ -39,9 +39,11 @@ import Inject
             guard let refs = observations[key]
             else { return }
             refs.forEach({ ref in
+                print("ObS ─────> notified \(key.debugDescription).\n")
                 ref.value?.send()
             })
         }
+
 
         keys.forEach{ observations.removeValue(forKey: $0) }
     }

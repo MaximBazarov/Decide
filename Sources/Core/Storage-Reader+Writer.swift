@@ -31,6 +31,14 @@ import Foundation
     var storage: StorageSystem
     var dependencies: DependencySystem
     var onWrite: (StorageKey) -> Void = {_ in }
+    var ownerKey: StorageKey? = nil
+
+
+    func withOwner(_ owner: StorageKey) -> StorageReader {
+        let reader = StorageReader(storage: storage, dependencies: dependencies)
+        reader.ownerKey = owner
+        return reader
+    }
 
     init(storage: StorageSystem,
          dependencies: DependencySystem
@@ -41,22 +49,25 @@ import Foundation
 
     func read<T>(
         key: StorageKey,
-        onBehalf ownerKey: StorageKey?,
         fallbackValue: ValueProvider<T>,
         shouldStoreDefaultValue: Bool
     ) -> T {
         do {
             if let owner = ownerKey, key != owner {
-                dependencies.add(dependency: owner, thatInvalidates: key)
+                print(" │d+ \(key.debugDescription) invalidates \(ownerKey?.debugDescription ?? "")")
+                dependencies.add(dependency: key, thatInvalidates: owner)
             }
-
-            return try storage.getValue(
+            let value: T = try storage.getValue(
                 for: key,
                 onBehalf: ownerKey
             )
+            defer { print(" │  └─ returns \(key.debugDescription): \(value) \t\t [Storage Reader]") }
+            return value
         } catch {
+            print(" │ └─ throws \(error.localizedDescription)")
             let newValue = fallbackValue()
             if shouldStoreDefaultValue {
+                print(" │ └─ writes fallback value \(newValue)")
                 onWrite(key)
                 storage.setValue(newValue, for: key, onBehalf: key)
             }

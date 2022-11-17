@@ -32,6 +32,13 @@ import XCTest
         AssertStorageKeySet(result, isExactly: expected)
     }
 
+    func test_Graph_e() {
+        let sut = DependencyGraph()
+        sut.add(dependency: IntStateSample.key, thatInvalidates: StringStateSample.key)
+        let dependencies = sut.popDependencies(of: IntStateSample.key)
+        print(dependencies)
+    }
+
 }
 
 func AssertStorageKeySet(_ actual: Set<StorageKey>, isExactly expected: Set<StorageKey>, _ file: StaticString = #file, _ line: UInt = #line) {

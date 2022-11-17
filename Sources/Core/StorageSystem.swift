@@ -55,10 +55,12 @@ public typealias ValueProvider<T> = @MainActor () -> T
     public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
         guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
+        print(" │  getValue \(key.debugDescription): \(value) \t\t\t [\(self)] ")
         return value
     }
 
     public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+        print(" │+ \(key.debugDescription): \(value) [\(Self.self).setValue]")
         values[key] = value
     }
 

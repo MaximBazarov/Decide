@@ -18,34 +18,7 @@ import Inject
 import Combine
 
 
-//===----------------------------------------------------------------------===//
-// MARK: - Decision
-//===----------------------------------------------------------------------===//
 
-
-@MainActor public protocol Decision {
-    /// Describes how decision has to be executed.
-    /// Applying state changes using read/write.
-    /// All heavy or asynchronous work **must** be isolated in produced ``Effect``.
-    ///
-    /// - Parameters:
-    ///   - read: Connected to the ``StorageSystem`` and configured ``StorageReader``.
-    ///   - write: Connected to the ``StorageSystem`` and configured ``StorageWriter``.
-    /// - Returns: Effect with enclosed heavy/async job.
-    func execute(read: StorageReader, write: StorageWriter) -> Effect
-}
-
-//===----------------------------------------------------------------------===//
-// MARK: - Effect
-//===----------------------------------------------------------------------===//
-
-public protocol Effect {
-
-    /// Encloses the asynchronous execution.
-    /// Produces the ``Decision`` that describes the state updates with the result.
-    /// - Returns: Decision that describes state updates required after the async execution.
-    func perform() async -> Decision
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -83,29 +56,31 @@ public extension DecisionCore {
         _reader.onWrite = { updatedKeys.insert($0) }
         _writer.onWrite = { updatedKeys.insert($0) }
 
-        // log decision execution started:
+        print(" ┌─ [DECISION] \(decision.debugDescription) execution started ")
         let effect = decision.execute(read: _reader, write: _writer)
-        // log decision execution finished:
+        let _effectSuffix = isNoop(effect) ? "No effect produced." : "effect -> \(effect.debugDescription)"
+
 
         // TODO: Performance Tests on a big graphs with a lot of connections
-        // log dependencies calculation started: (Decision)
+        print(" │  ├─ [DepS] get dependencies")
         let updated = updatedKeys
             .flatMap { _dependencies.popDependencies(of: $0) }
-        // log dependencies calculation finished: (Decision) invalidated keys count (count)
+        print(" │  └─ \(updated.map{ $0.debugDescription })")
 
-        // log notification started: (Decision): (count) keys observers notified, payload, set of keys updated
+        print(" │  ├─ [ObS] notify ")
         _observation.didChangeValue(for: Set<StorageKey>(updated))
-        // log notification finished: (Decision)
-
+        print(" │  └─ \(updated.map{ $0.debugDescription })")
+        print(" └─ execution finished. \(_effectSuffix)\n")
         // Execute effect if there's any
         if isNoop(effect) {
-            // log decision returned no effect, execution finished.
             return
         }
-        // log decision produced effect: \(effect) | execution started
-        Task(priority: .background) { [execute] in
-            let decision = await effect.perform()
+
+        Task(priority: .background) { [execute, _reader] in
+            print("SIDE <───── effect \(effect.debugDescription). \n")
+            let decision = await effect.perform(read: _reader)
             // log effect execution finished: effect
+            print("SIDE ─────> effect \(effect.debugDescription). produces \(decision.debugDescription) \n")
             execute(decision)
         }
     }

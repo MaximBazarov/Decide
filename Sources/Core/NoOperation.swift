@@ -32,9 +32,9 @@ public let noEffect: Effect = NoOperation.shared
 // MARK: - No Operation Internal Implementation
 //===----------------------------------------------------------------------===//
 
-@MainActor final class NoOperation: Effect, Decision {
+@MainActor final class NoOperation: CustomDebugStringConvertible, Effect, Decision {
 
-    func perform() async -> Decision {
+    func perform(read: StorageReader) async -> Decision {
         Self.shared
     }
 
@@ -44,6 +44,10 @@ public let noEffect: Effect = NoOperation.shared
 
     nonisolated init() {}
     nonisolated static let shared = NoOperation()
+
+    nonisolated var debugDescription: String {
+        "No Operation"
+    }
 }
 
 func isNoop(_ object: Any) -> Bool {

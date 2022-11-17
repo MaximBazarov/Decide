@@ -52,7 +52,6 @@ public extension StorageReader {
     func callAsFunction<T: AtomicState>(_ type: T.Type) -> T.Value {
         return read(
             key: type.key,
-            onBehalf: type.key,
             fallbackValue: type.defaultValue,
             shouldStoreDefaultValue: true
         )
