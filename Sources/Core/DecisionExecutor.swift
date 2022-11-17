@@ -35,7 +35,6 @@ import Combine
     func execute(read: StorageReader, write: StorageWriter) -> Effect
 }
 
-
 //===----------------------------------------------------------------------===//
 // MARK: - Effect
 //===----------------------------------------------------------------------===//
@@ -78,6 +77,8 @@ public protocol Effect {
 // MARK: Public
 public extension DecisionCore {
     @MainActor func execute(_ decision: Decision) {
+        if isNoop(decision) { return }
+
         var updatedKeys: Set<StorageKey> = []
         _reader.onWrite = { updatedKeys.insert($0) }
         _writer.onWrite = { updatedKeys.insert($0) }
@@ -89,15 +90,19 @@ public extension DecisionCore {
         // TODO: Performance Tests on a big graphs with a lot of connections
         // log dependencies calculation started: (Decision)
         let updated = updatedKeys
-            .union(updatedKeys
-                .flatMap { _dependencies.popDependencies(of: $0) })
+            .flatMap { _dependencies.popDependencies(of: $0) }
         // log dependencies calculation finished: (Decision) invalidated keys count (count)
 
         // log notification started: (Decision): (count) keys observers notified, payload, set of keys updated
         _observation.didChangeValue(for: Set<StorageKey>(updated))
         // log notification finished: (Decision)
 
-        // log effect execution started: effect
+        // Execute effect if there's any
+        if isNoop(effect) {
+            // log decision returned no effect, execution finished.
+            return
+        }
+        // log decision produced effect: \(effect) | execution started
         Task(priority: .background) { [execute] in
             let decision = await effect.perform()
             // log effect execution finished: effect
@@ -121,6 +126,10 @@ public extension DecisionCore {
     let _observation: ObservationSystem
     let _reader: StorageReader
     let _writer: StorageWriter
+
+    public convenience init(storage: StorageSystem? = nil) {
+        self.init(storage: storage, dependencies: nil, observation: nil)
+    }
 
     init(storage: StorageSystem? = nil,
          dependencies: DependencySystem? = nil,

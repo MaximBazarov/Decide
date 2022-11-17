@@ -14,4 +14,28 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Foundation
+import XCTest
+import Decide
+
+@MainActor final class DecisionExecutorTests: XCTestCase {
+
+    struct TestDecision: Decision {
+        let value: Int
+        init(_ value: Int) { self.value = value }
+
+        func execute(read: Decide.StorageReader, write: Decide.StorageWriter) -> Decide.Effect {
+            write(value, into: IntStateSample.self)
+            return noEffect
+        }
+    }
+
+    func test_Execute_Decision_StateChangesAccordingly() {
+        let sut = DecisionCore()
+        let read = sut.reader()
+
+        sut.execute(TestDecision(77))
+
+        XCTAssertEqual(read(IntStateSample.self), 77)
+
+    }
+}
