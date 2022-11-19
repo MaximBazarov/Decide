@@ -26,6 +26,9 @@ import Inject
         publisher: ObservableObjectPublisher,
         for key: StorageKey
     ) {
+        let poster = Signposter()
+        let end = poster.addObservationStart(key)
+        defer { end() }
         let publisher = WeakRefPublisher(publisher)
         guard observations.keys.contains(key) else {
             observations[key] = Set([publisher])
@@ -35,15 +38,20 @@ import Inject
     }
 
     func didChangeValue(for keys: Set<StorageKey>) {
+        let poster = Signposter()
+        let end = poster.popObservationsStart(keys)
+        defer { end() }
         keys.forEach { key in
+            poster.emitEvent("K")
             guard let refs = observations[key]
-            else { return }
+            else {
+                return
+            }
             refs.forEach({ ref in
-                print("ObS ─────> notified \(key.debugDescription).\n")
+                poster.emitEvent("r")
                 ref.value?.send()
             })
         }
-
 
         keys.forEach{ observations.removeValue(forKey: $0) }
     }
@@ -62,5 +70,36 @@ final class WeakRefPublisher: Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
+    }
+}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Logging
+//===----------------------------------------------------------------------===//
+
+extension Signposter {
+    nonisolated func popObservationsStart(_ keys: Set<StorageKey>) -> () -> Void {
+        let name: StaticString = "Observers: pop"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "keys: \(keys.map{ $0.debugDescription }, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
+    }
+
+    nonisolated func addObservationStart(_ key: StorageKey) -> () -> Void {
+        let name: StaticString = "Observers: add"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 }

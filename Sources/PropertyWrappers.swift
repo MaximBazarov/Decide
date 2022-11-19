@@ -24,21 +24,21 @@ import SwiftUI
 
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public final class Observe<Value>: ObservableObject, DynamicProperty {
+    @Injected(\.decisionCore) public var core
+
     public let objectWillChange = ObservableObjectPublisher()
     @MainActor public var wrappedValue: Value {
         get {
             core.instance.subscribe(publisher: objectWillChange, for: key)
             let value = getValue(reader)
-            print(" > returns \(value) from \(self)")
             return value
         }
     }
 
-    @Injected(\.decisionCore) var core
-
     private var reader: StorageReader {
         core.instance.reader()
     }
+
     private let key: StorageKey
     private let getValue: @MainActor (StorageReader) -> Value
 

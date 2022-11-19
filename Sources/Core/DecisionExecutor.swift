@@ -16,9 +16,7 @@
 
 import Inject
 import Combine
-
-
-
+import OSLog
 
 
 //===----------------------------------------------------------------------===//
@@ -47,41 +45,38 @@ import Combine
 // MARK: - Decision Core (Default)
 //===----------------------------------------------------------------------===//
 
+
 // MARK: Public
 public extension DecisionCore {
     @MainActor func execute(_ decision: Decision) {
         if isNoop(decision) { return }
+        let poster = Signposter()
+        let effect = poster.decisionStart(decision) {
+            var updatedKeys: Set<StorageKey> = []
+            _reader.onWrite = { updatedKeys.insert($0) }
+            _writer.onWrite = { updatedKeys.insert($0) }
 
-        var updatedKeys: Set<StorageKey> = []
-        _reader.onWrite = { updatedKeys.insert($0) }
-        _writer.onWrite = { updatedKeys.insert($0) }
+            //=== State Update
+            let effect = decision.execute(read: _reader, write: _writer)
 
-        print(" ┌─ [DECISION] \(decision.debugDescription) execution started ")
-        let effect = decision.execute(read: _reader, write: _writer)
-        let _effectSuffix = isNoop(effect) ? "No effect produced." : "effect -> \(effect.debugDescription)"
+            //=== Traverse Dependency Graph
+            let updated = updatedKeys
+                .flatMap { _dependencies.popDependencies(of: $0) }
 
-
-        // TODO: Performance Tests on a big graphs with a lot of connections
-        print(" │  ├─ [DepS] get dependencies")
-        let updated = updatedKeys
-            .flatMap { _dependencies.popDependencies(of: $0) }
-        print(" │  └─ \(updated.map{ $0.debugDescription })")
-
-        print(" │  ├─ [ObS] notify ")
-        _observation.didChangeValue(for: Set<StorageKey>(updated))
-        print(" │  └─ \(updated.map{ $0.debugDescription })")
-        print(" └─ execution finished. \(_effectSuffix)\n")
-        // Execute effect if there's any
-        if isNoop(effect) {
-            return
+            //=== Notify Observers
+            _observation.didChangeValue(for: Set<StorageKey>(updated))
+            return effect
         }
+        // Execute effect if there's any
+        if isNoop(effect) { return }
+        let effectEnd = poster.effectStart(effect)
+        Task.detached(priority: .background) { [execute, _reader] in
 
-        Task(priority: .background) { [execute, _reader] in
-            print("SIDE <───── effect \(effect.debugDescription). \n")
             let decision = await effect.perform(read: _reader)
-            // log effect execution finished: effect
-            print("SIDE ─────> effect \(effect.debugDescription). produces \(decision.debugDescription) \n")
-            execute(decision)
+            Task.detached(priority: .high) { @MainActor in
+                effectEnd()
+                execute(decision)
+            }
         }
     }
 
@@ -94,7 +89,7 @@ public extension DecisionCore {
     }
 }
 
-// MARK: Private
+// MARK: Props/Init
 @MainActor public final class DecisionCore: DecisionExecutor {
     private let _storage: StorageSystem
     let _dependencies: DependencySystem
@@ -118,5 +113,36 @@ public extension DecisionCore {
         _observation = observation
         _reader = StorageReader(storage: storage, dependencies: dependencies)
         _writer = StorageWriter(storage: storage, dependencies: dependencies)
+    }
+}
+
+//===----------------------------------------------------------------------===//
+// MARK: - Logging
+//===----------------------------------------------------------------------===//
+
+extension Signposter {
+    nonisolated func decisionStart(_ decision: Decision, _ job: () -> Effect) -> Effect {
+        let name: StaticString = "Decision"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "decision: \(decision.debugDescription, privacy: .private(mask: .hash))"
+        )
+        defer {
+            signposter.endInterval(name, state)
+        }
+        return job()
+    }
+
+    nonisolated func effectStart(_ effect: Effect) -> () -> Void {
+        let name: StaticString = "Effect"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "effect: \(effect.debugDescription, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 }

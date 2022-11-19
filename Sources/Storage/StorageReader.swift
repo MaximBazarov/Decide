@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Foundation
+import OSLog
 
 //===----------------------------------------------------------------------===//
 // MARK: - Storage Reader
@@ -52,22 +52,25 @@ import Foundation
         fallbackValue: ValueProvider<T>,
         shouldStoreDefaultValue: Bool
     ) -> T {
+        let post = Signposter()
+        let end = post.readStart(key: key, owner: ownerKey)
+        defer { end() }
         do {
             if let owner = ownerKey, key != owner {
-                print(" │d+ \(key.debugDescription) invalidates \(ownerKey?.debugDescription ?? "")")
                 dependencies.add(dependency: key, thatInvalidates: owner)
             }
             let value: T = try storage.getValue(
                 for: key,
                 onBehalf: ownerKey
             )
-            defer { print(" │  └─ returns \(key.debugDescription): \(value) \t\t [Storage Reader]") }
+
             return value
         } catch {
-            print(" │ └─ throws \(error.localizedDescription)")
+            let post = Signposter()
+            let end = post.fallbackWriteStart(key: key, owner: ownerKey)
+            defer { end() }
             let newValue = fallbackValue()
             if shouldStoreDefaultValue {
-                print(" │ └─ writes fallback value \(newValue)")
                 onWrite(key)
                 storage.setValue(newValue, for: key, onBehalf: key)
             }
@@ -76,28 +79,33 @@ import Foundation
     }
 }
 
-
 //===----------------------------------------------------------------------===//
-// MARK: - Storage Writer
+// MARK: - Logging
 //===----------------------------------------------------------------------===//
 
-/// Writes the value into the storage for a provided key.
-/// ```swift
-/// // write: StorageWriter
-/// write(x, into: SomeState.self)
-/// ```
-@MainActor public final class StorageWriter {
-    var storage: StorageSystem
-    var dependencies: DependencySystem
-    var onWrite: (StorageKey) -> Void = {_ in }
+private extension Signposter {
 
-    init(storage: StorageSystem, dependencies: DependencySystem) {
-        self.storage = storage
-        self.dependencies = dependencies
+    nonisolated func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+        let name: StaticString = "Storage Reader: read"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 
-    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
-        onWrite(key)
-        storage.setValue(value, for: key, onBehalf: owner)
+    nonisolated func fallbackWriteStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+        let name: StaticString = "Storage Reader: fallback"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 }

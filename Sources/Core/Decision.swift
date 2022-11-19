@@ -33,12 +33,11 @@ import Foundation
 }
 
 extension Decision {
-    public var debugDescription: String {
-        Self.pretty(String(reflecting: Self.self))
-    }
 
-    static func pretty(_ value: String) -> String {
-        let name = value.split(separator: ".").last ?? "<UNTITLED>"
-        return String(name)
+    nonisolated public var debugDescription: String {
+        return String(reflecting: Self.self)
+            .split(separator: ".")
+            .map{ String($0) }
+            .last ?? "<UNTITLED>"
     }
 }

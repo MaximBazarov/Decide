@@ -36,7 +36,6 @@ import XCTest
         let sut = DependencyGraph()
         sut.add(dependency: IntStateSample.key, thatInvalidates: StringStateSample.key)
         let dependencies = sut.popDependencies(of: IntStateSample.key)
-        print(dependencies)
     }
 
 }
