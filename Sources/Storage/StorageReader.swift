@@ -30,21 +30,28 @@ import OSLog
 
     var storage: StorageSystem
     var dependencies: DependencySystem
+    var observations: ObservationSystem
     var onWrite: (StorageKey) -> Void = {_ in }
     var ownerKey: StorageKey? = nil
 
 
     func withOwner(_ owner: StorageKey) -> StorageReader {
-        let reader = StorageReader(storage: storage, dependencies: dependencies)
+        let reader = StorageReader(
+            storage: storage,
+            dependencies: dependencies,
+            observations: observations
+        )
         reader.ownerKey = owner
         return reader
     }
 
     init(storage: StorageSystem,
-         dependencies: DependencySystem
+         dependencies: DependencySystem,
+         observations: ObservationSystem
     ) {
         self.storage = storage
         self.dependencies = dependencies
+        self.observations = observations
     }
 
     func read<T>(

@@ -22,11 +22,11 @@ import Combine
 
     func test_Subscribe_mustAdd_Publisher() {
         let sut = ObservationSystem()
-        let publisher = ObservableObjectPublisher()
-        sut.subscribe(publisher: publisher, for: IntStateSample.key)
+        let publisher = ObservableAtomicValue()
+        sut.subscribe(publisher, for: IntStateSample.key)
 
         XCTAssert(sut.observations[IntStateSample.key]?.count == 1)
-        let storedPublisher: ObservableObjectPublisher = sut
+        let storedPublisher = sut
             .observations[IntStateSample.key]!
             .first!
             .value!
@@ -36,11 +36,11 @@ import Combine
 
     func test_Subscribe_TwoPublishersSameKey_mustAdd_BothPublishers() {
         let sut = ObservationSystem()
-        let publisher1 = ObservableObjectPublisher()
-        let publisher2 = ObservableObjectPublisher()
+        let publisher1 = ObservableAtomicValue()
+        let publisher2 = ObservableAtomicValue()
 
-        sut.subscribe(publisher: publisher1, for: IntStateSample.key)
-        sut.subscribe(publisher: publisher2, for: IntStateSample.key)
+        sut.subscribe(publisher1, for: IntStateSample.key)
+        sut.subscribe(publisher2, for: IntStateSample.key)
 
         XCTAssert(sut.observations[IntStateSample.key]?.count == 2)
         let keyObservations = sut.observations[IntStateSample.key]!
@@ -59,11 +59,11 @@ import Combine
 
     func test_Notify_mustRemove_AllPublishersOfKey() {
         let sut = ObservationSystem()
-        let publisher1 = ObservableObjectPublisher()
-        let publisher2 = ObservableObjectPublisher()
+        let publisher1 = ObservableAtomicValue()
+        let publisher2 = ObservableAtomicValue()
 
-        sut.subscribe(publisher: publisher1, for: IntStateSample.key)
-        sut.subscribe(publisher: publisher2, for: IntStateSample.key)
+        sut.subscribe(publisher1, for: IntStateSample.key)
+        sut.subscribe(publisher2, for: IntStateSample.key)
         
         sut.didChangeValue(for: Set([IntStateSample.key]))
 
@@ -74,11 +74,11 @@ import Combine
     func test_TwoKeys_mustRemove_publishersOfKey_mustKeep_publisherOfOtherKey() {
         let sut = ObservationSystem()
 
-        let publisherKeep = ObservableObjectPublisher()
-        let publisherRemove = ObservableObjectPublisher()
+        let publisherKeep = ObservableAtomicValue()
+        let publisherRemove = ObservableAtomicValue()
 
-        sut.subscribe(publisher: publisherKeep, for: StringStateSample.key)
-        sut.subscribe(publisher: publisherRemove, for: IntStateSample.key)
+        sut.subscribe(publisherKeep, for: StringStateSample.key)
+        sut.subscribe(publisherRemove, for: IntStateSample.key)
 
         sut.didChangeValue(for: Set([IntStateSample.key]))
 

@@ -77,7 +77,9 @@ extension DependencyGraph {
         guard let keyDependencies = dependencies[key]
         else { return }
 
-        queue.enqueue(keyDependencies.filter { !result.contains($0) })
+        queue.enqueue(keyDependencies.filter { 
+            !result.contains($0) 
+        })
 
         while let next = queue.dequeue() {
             pop(for: next, into: &result, queue: &queue)

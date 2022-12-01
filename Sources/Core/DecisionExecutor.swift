@@ -36,8 +36,7 @@ import OSLog
     /// Returns a ``StorageWriter`` configured for the enclosed ``StorageSystem``.
     func writer(/*context: Context*/) -> StorageWriter
 
-    /// Adds provided publisher as to be notified when value at given ``StorageKey`` changes.
-    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey)
+    var observationSystem: ObservationSystem { get }
 }
 
 
@@ -82,10 +81,9 @@ public extension DecisionCore {
 
     func writer() -> StorageWriter { _writer }
     func reader() -> StorageReader { _reader }
-    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey) {
-        // log publisher subscribed to key started
-        _observation.subscribe(publisher: publisher, for: key)
-        // log publisher subscribed to key finished (publisher) observes (key)
+
+    var observationSystem: ObservationSystem {
+        _observation
     }
 }
 
@@ -111,8 +109,8 @@ public extension DecisionCore {
         _storage = storage
         _dependencies = dependencies
         _observation = observation
-        _reader = StorageReader(storage: storage, dependencies: dependencies)
-        _writer = StorageWriter(storage: storage, dependencies: dependencies)
+        _reader = StorageReader(storage: storage, dependencies: dependencies, observations: observation)
+        _writer = StorageWriter(storage: storage, dependencies: dependencies, observations: observation)
     }
 }
 

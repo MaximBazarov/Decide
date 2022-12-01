@@ -19,7 +19,7 @@ let package = Package(
     name: "Decide",
     platforms: [
         .macOS(.v13),
-        .iOS(.v13),
+        .iOS(.v15),
         .watchOS(.v8),
         .tvOS(.v15),
     ],

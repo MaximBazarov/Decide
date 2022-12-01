@@ -18,61 +18,79 @@ import Combine
 import Inject
 
 /// Keyed with ``StorageKey`` set weak references to `ObservableObjectPublisher`
-@MainActor final class ObservationSystem {
+@MainActor public final class ObservationSystem {
 
-    var observations: [StorageKey: Set<WeakRefPublisher>] = [:]
+    var observations: [StorageKey: Set<ObservableAtomicValue.WeakRef>] = [:]
 
-    func subscribe(
-        publisher: ObservableObjectPublisher,
+    func subscribe<T: ObservableAtomicValue>(
+        _ observableAtomicValue: T,
         for key: StorageKey
     ) {
         let poster = Signposter()
         let end = poster.addObservationStart(key)
         defer { end() }
-        let publisher = WeakRefPublisher(publisher)
+        let observation = ObservableAtomicValue.WeakRef(observableAtomicValue)
         guard observations.keys.contains(key) else {
-            observations[key] = Set([publisher])
+            observations[key] = Set([observation])
             return
         }
-        observations[key]?.insert(publisher)
+        observations[key]?.insert(observation)
     }
 
     func didChangeValue(for keys: Set<StorageKey>) {
         let poster = Signposter()
         let end = poster.popObservationsStart(keys)
         defer { end() }
-        keys.forEach { key in
-            poster.emitEvent("K")
+
+        let observers = Set<ObservableAtomicValue>(keys.flatMap { key in
             guard let refs = observations[key]
-            else {
-                return
-            }
-            refs.forEach({ ref in
-                poster.emitEvent("r")
-                ref.value?.send()
-            })
+            else { return [ObservableAtomicValue]() }
+            return refs.compactMap{ $0.value }
+        })
+
+        observers.forEach { observer in
+            observer.send()
         }
 
         keys.forEach{ observations.removeValue(forKey: $0) }
     }
+
+    func didChangeValue(for key: StorageKey) {
+        didChangeValue(for: Set([key]))
+    }
 }
 
-final class WeakRefPublisher: Hashable {
-    weak var value: ObservableObjectPublisher?
+public final class ObservableAtomicValue: ObservableObject, Hashable {
 
-    init(_ value: ObservableObjectPublisher) {
-        self.value = value
+    public init() {}
+    public func send() {
+        objectWillChange.send()
+        print("update sent")
     }
 
-    static func == (lhs: WeakRefPublisher, rhs: WeakRefPublisher) -> Bool {
+    public static func == (lhs: ObservableAtomicValue, rhs: ObservableAtomicValue) -> Bool {
         ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }
-}
 
+    final class WeakRef: Hashable {
+        weak var value: ObservableAtomicValue?
+        init(_ value: ObservableAtomicValue) {
+            self.value = value
+        }
+
+        static func == (lhs: WeakRef, rhs: WeakRef) -> Bool {
+            ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(ObjectIdentifier(self))
+        }
+    }
+}
 
 //===----------------------------------------------------------------------===//
 // MARK: - Logging

@@ -39,7 +39,7 @@ public extension StorageReader {
 
 @MainActor public extension Observe {
     /// Read-only access to the value of the ``AtomicState``
-    convenience init<T: Computation>(_ type: T.Type) where T.Value == Value {
+    init<T: Computation>(_ type: T.Type) where T.Value == Value {
         self.init(key: T.key, getValue: { reader in
             reader(type)
         })

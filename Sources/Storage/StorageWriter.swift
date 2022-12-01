@@ -24,18 +24,24 @@ import Foundation
 @MainActor public final class StorageWriter {
     var storage: StorageSystem
     var dependencies: DependencySystem
+    var observations: ObservationSystem
     var onWrite: (StorageKey) -> Void = {_ in }
 
-    init(storage: StorageSystem, dependencies: DependencySystem) {
+    init(storage: StorageSystem, dependencies: DependencySystem, observations: ObservationSystem) {
         self.storage = storage
         self.dependencies = dependencies
+        self.observations = observations
     }
 
     func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
         let post = Signposter()
         let end = post.writeStart(key: key, owner: owner)
-        defer { end() }
-        onWrite(key)
+        defer {
+            onWrite(key)
+            print("key: \(key), value: \(value)")
+            observations.didChangeValue(for: key)
+            end()
+        }
         storage.setValue(value, for: key, onBehalf: owner)
     }
 }
