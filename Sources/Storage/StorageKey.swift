@@ -66,16 +66,20 @@ public extension StorageKey {
 
 extension StorageKey {
     public var debugDescription: String {
-        let id = Self.stripTypes(typeKey)
-        return "\(_typeName) \(id)"
+        return Self.pretty(_typeName)
     }
 
-    static func stripTypes(_ value: AnyHashable) -> String {
-        value
-            .debugDescription
+    static func pretty(_ value: String) -> String {
+        let str = value
             .replacingOccurrences(of: "ObjectIdentifier", with: "")
             .replacingOccurrences(of: "AnyHashable", with: "")
             .replacingOccurrences(of: "((", with: "(")
             .replacingOccurrences(of: "))", with: ")")
+            .split(separator: ".")
+            .suffix(1)
+            .joined(separator: ".")
+
+
+        return String(str)
     }
 }

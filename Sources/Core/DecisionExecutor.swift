@@ -16,36 +16,19 @@
 
 import Inject
 import Combine
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Decision
-//===----------------------------------------------------------------------===//
-
-@MainActor public protocol Decision {
-
-}
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Effect
-//===----------------------------------------------------------------------===//
-
-@MainActor public protocol Effect {
-
-}
+import OSLog
 
 
 //===----------------------------------------------------------------------===//
 // MARK: - Decision Executor Protocol
 //===----------------------------------------------------------------------===//
 
-/// Core class that combines ``StorageSystem``, ``DependencySystem`` and ``ObservationSystem`` to execute ``Decision`` and produced by it ``Effect``
+/// Core class that combines ``StorageSystem``, `DependencySystem` and `ObservationSystem` to execute ``Decision`` and produced by it ``Effect``
 @MainActor public protocol DecisionExecutor {
 
     /// Executes the ``Decision`` and produced by it ``Effect``s.
     /// - Parameter decision: Decision to execute
-    func execute<D: Decision>(_ decision: D /*, context: Context*/)
+    func execute(_ decision: Decision /*, context: Context*/)
 
     /// Returns a ``StorageReader`` configured for the enclosed ``StorageSystem``.
     func reader(/*context: Context*/) -> StorageReader
@@ -53,8 +36,7 @@ import Combine
     /// Returns a ``StorageWriter`` configured for the enclosed ``StorageSystem``.
     func writer(/*context: Context*/) -> StorageWriter
 
-    /// Adds provided publisher as to be notified when value at given ``StorageKey`` changes.
-    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey)
+    var observationSystem: ObservationSystem { get }
 }
 
 
@@ -62,26 +44,60 @@ import Combine
 // MARK: - Decision Core (Default)
 //===----------------------------------------------------------------------===//
 
+
 // MARK: Public
 public extension DecisionCore {
-    func execute<D>(_ decision: D) where D : Decision {
+    @MainActor func execute(_ decision: Decision) {
+        if isNoop(decision) { return }
+        let poster = Signposter()
+        let effect = poster.decisionStart(decision) {
+            var updatedKeys: Set<StorageKey> = []
+            _reader.onWrite = { updatedKeys.insert($0) }
+            _writer.onWrite = { updatedKeys.insert($0) }
 
+            //=== State Update
+            let effect = decision.execute(read: _reader, write: _writer)
+
+            //=== Traverse Dependency Graph
+            let updated = updatedKeys
+                .flatMap { _dependencies.popDependencies(of: $0) }
+
+            //=== Notify Observers
+            _observation.didChangeValue(for: Set<StorageKey>(updated))
+            return effect
+        }
+        // Execute effect if there's any
+        if isNoop(effect) { return }
+        let effectEnd = poster.effectStart(effect)
+        Task.detached(priority: .background) { [execute, _reader] in
+
+            let decision = await effect.perform(read: _reader)
+            Task.detached(priority: .high) { @MainActor in
+                effectEnd()
+                execute(decision)
+            }
+        }
     }
 
     func writer() -> StorageWriter { _writer }
     func reader() -> StorageReader { _reader }
-    func subscribe(publisher: ObservableObjectPublisher, for key: StorageKey) {
-        _observation.subscribe(publisher: publisher, for: key)
+
+    var observationSystem: ObservationSystem {
+        _observation
     }
 }
 
-// MARK: Private
+// MARK: Props/Init
 @MainActor public final class DecisionCore: DecisionExecutor {
-    let _storage: StorageSystem
+    private let _storage: StorageSystem
     let _dependencies: DependencySystem
     let _observation: ObservationSystem
     let _reader: StorageReader
     let _writer: StorageWriter
+
+    public convenience init(storage: StorageSystem? = nil) {
+        self.init(storage: storage, dependencies: nil, observation: nil)
+    }
 
     init(storage: StorageSystem? = nil,
          dependencies: DependencySystem? = nil,
@@ -93,85 +109,38 @@ public extension DecisionCore {
         _storage = storage
         _dependencies = dependencies
         _observation = observation
-        _reader = StorageReader(storage: storage, dependencies: dependencies)
-        _writer = StorageWriter(storage: storage, dependencies: dependencies)
+        _reader = StorageReader(storage: storage, dependencies: dependencies, observations: observation)
+        _writer = StorageWriter(storage: storage, dependencies: dependencies, observations: observation)
     }
 }
 
-
 //===----------------------------------------------------------------------===//
-// MARK: - Storage Reader
+// MARK: - Logging
 //===----------------------------------------------------------------------===//
 
-/// Reads the value from the storage at the provided key.
-/// ```swift
-/// // read: StorageReader
-/// let x = read(SomeState.self)
-/// // x: SomeState.Value
-/// ```
-@MainActor public final class StorageReader {
-
-    var storage: StorageSystem
-    var dependencies: DependencySystem
-
-    init(storage: StorageSystem, dependencies: DependencySystem) {
-        self.storage = storage
-        self.dependencies = dependencies
-    }
-
-    func read<T>(
-        key: StorageKey,
-        onBehalf ownerKey: StorageKey?,
-        fallbackValue: ValueProvider<T>,
-        shouldStoreDefaultValue: Bool
-    ) -> T {
-        do {
-            if let owner = ownerKey, key != owner {
-                dependencies.add(dependency: owner, thatInvalidates: key)
-            }
-
-            return try storage.getValue(
-                for: key,
-                onBehalf: ownerKey
-            )
-        } catch {
-            let newValue = fallbackValue()
-            if shouldStoreDefaultValue {
-                storage.setValue(newValue, for: key, onBehalf: key)
-            }
-            return newValue
+extension Signposter {
+    nonisolated func decisionStart(_ decision: Decision, _ job: () -> Effect) -> Effect {
+        let name: StaticString = "Decision"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "decision: \(decision.debugDescription, privacy: .private(mask: .hash))"
+        )
+        defer {
+            signposter.endInterval(name, state)
         }
-    }
-}
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Storage Writer
-//===----------------------------------------------------------------------===//
-
-/// Writes the value into the storage for a provided key.
-/// ```swift
-/// // write: StorageWriter
-/// write(x, into: SomeState.self)
-/// ```
-@MainActor public final class StorageWriter {
-    var storage: StorageSystem
-    var dependencies: DependencySystem
-
-    init(storage: StorageSystem, dependencies: DependencySystem) {
-        self.storage = storage
-        self.dependencies = dependencies
+        return job()
     }
 
-    private var writtenKeys: Set<StorageKey> = []
-
-    func popKeys() -> Set<StorageKey> {
-        defer { writtenKeys = [] }
-        return writtenKeys
-    }
-
-    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
-        writtenKeys.insert(key)
-        storage.setValue(value, for: key, onBehalf: owner)
+    nonisolated func effectStart(_ effect: Effect) -> () -> Void {
+        let name: StaticString = "Effect"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "effect: \(effect.debugDescription, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 }

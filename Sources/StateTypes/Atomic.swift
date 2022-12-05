@@ -52,7 +52,6 @@ public extension StorageReader {
     func callAsFunction<T: AtomicState>(_ type: T.Type) -> T.Value {
         return read(
             key: type.key,
-            onBehalf: type.key,
             fallbackValue: type.defaultValue,
             shouldStoreDefaultValue: true
         )
@@ -65,7 +64,7 @@ public extension StorageReader {
 
 @MainActor public extension Observe {
     /// Read-only access to the value of the ``AtomicState``
-    convenience init<T: AtomicState>(_ type: T.Type) where T.Value == Value {
+    init<T: AtomicState>(_ type: T.Type) where T.Value == Value {
         self.init(key: T.key, getValue: { reader in
             reader(type)
         })
@@ -78,8 +77,9 @@ public extension StorageReader {
 
 @MainActor public extension Bind {
     /// Read/write access to the value of the ``AtomicState``
-    convenience init<T: AtomicState>(_ state: T.Type) where T.Value == Value {
+    init<T: AtomicState>(_ state: T.Type) where T.Value == Value {
         self.init(
+            key: state.key,
             getValue: { read in read(state) },
             setValue: { write, value in write(value, into: state) }
         )

@@ -16,6 +16,7 @@
 
 import Foundation
 import Inject
+import OSLog
 
 //===----------------------------------------------------------------------===//
 // MARK: - Storage System
@@ -53,12 +54,18 @@ public typealias ValueProvider<T> = @MainActor () -> T
 
 @MainActor final class InMemoryStorage: StorageSystem {
     public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
+        let post = Signposter()
+        let end = post.readStart(key: key, owner: ownerKey)
+        defer { end() }
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
         guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
         return value
     }
 
     public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+        let post = Signposter()
+        let end = post.writeStart(key: key, owner: ownerKey)
+        defer { end() }
         values[key] = value
     }
 
@@ -83,5 +90,35 @@ public final class ValueTypeMismatch: Error {
     public let key: StorageKey
     init(_ key: StorageKey) {
         self.key = key
+    }
+}
+
+//===----------------------------------------------------------------------===//
+// MARK: - Logging
+//===----------------------------------------------------------------------===//
+
+private extension Signposter {
+    nonisolated func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+        let name: StaticString = "Storage: read"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
+    }
+
+    nonisolated func writeStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+        let name: StaticString = "Storage: write"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
     }
 }

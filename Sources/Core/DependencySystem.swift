@@ -21,7 +21,7 @@ import Foundation
 // MARK: - Dependency System Protocol
 //===----------------------------------------------------------------------===//
 
-@MainActor public protocol DependencySystem {
+@MainActor protocol DependencySystem {
     func add(dependency: StorageKey, thatInvalidates key: StorageKey)
     func popDependencies(of key: StorageKey) -> Set<StorageKey>
 }
@@ -37,6 +37,9 @@ extension DependencyGraph {
     ///   - dependency: the key on invalidating of which `key` will be invalidated.
     ///   - key: key to be invalidated together with `dependency`
     func add(dependency: StorageKey, thatInvalidates key: StorageKey) {
+        let signposter = Signposter()
+        let end = signposter.addDependenciesStart(key)
+        defer { end() }
         guard dependencies.keys.contains(dependency)
         else {
             dependencies[dependency] = Set([key])
@@ -51,6 +54,9 @@ extension DependencyGraph {
     ///   - key: key for which return dependencies
     ///   - result: All the dependencies of the key, recursively.
     func popDependencies(of key: StorageKey) -> Set<StorageKey> {
+        let signposter = Signposter()
+        let end = signposter.popDependenciesStart(key)
+        defer { end() }
         var result = Set<StorageKey>([key])
         var queue = Queue()
         pop(for: key, into: &result, queue: &queue)
@@ -71,8 +77,9 @@ extension DependencyGraph {
         guard let keyDependencies = dependencies[key]
         else { return }
 
-        // TODO: Report found cycles.
-        queue.enqueue(keyDependencies.filter { !result.contains($0) })
+        queue.enqueue(keyDependencies.filter { 
+            !result.contains($0) 
+        })
 
         while let next = queue.dequeue() {
             pop(for: next, into: &result, queue: &queue)
@@ -99,6 +106,37 @@ private extension DependencyGraph {
         func enqueue(_ keys: Set<StorageKey>) {
             values.formUnion(keys)
             count = UInt(values.count)
+        }
+    }
+}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Logging
+//===----------------------------------------------------------------------===//
+
+extension Signposter {
+    nonisolated func popDependenciesStart(_ key: StorageKey) -> () -> Void {
+        let name: StaticString = "Dependency: pop"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
+        }
+    }
+
+    nonisolated func addDependenciesStart(_ key: StorageKey) -> () -> Void {
+        let name: StaticString = "Dependency: add"
+        let state = signposter.beginInterval(
+            name,
+            id: id,
+            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+        )
+        return { [signposter] in
+            signposter.endInterval(name, state)
         }
     }
 }

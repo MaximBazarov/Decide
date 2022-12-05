@@ -23,20 +23,24 @@ import SwiftUI
 //===----------------------------------------------------------------------===//
 
 /// Provides an observed read-only access to the value of the atomic state type.
-@MainActor @propertyWrapper public final class Observe<Value>: ObservableObject, DynamicProperty {
-    public let objectWillChange = ObservableObjectPublisher()
-    public var wrappedValue: Value {
+@MainActor @propertyWrapper public struct Observe<Value>: DynamicProperty {
+    @ObservedObject public private(set)
+    var observedValue = ObservableAtomicValue()
+
+    @Injected(\.decisionCore) public var core
+
+    @MainActor public var wrappedValue: Value {
         get {
-            core.instance.subscribe(publisher: objectWillChange, for: key)
-            return getValue(reader)
+            core.instance.observationSystem.subscribe(observedValue, for: key)
+            let value = getValue(reader)
+            return value
         }
     }
-
-    @Injected(\.decisionCore) var core
 
     private var reader: StorageReader {
         core.instance.reader()
     }
+
     private let key: StorageKey
     private let getValue: @MainActor (StorageReader) -> Value
 
@@ -51,14 +55,25 @@ import SwiftUI
 //===----------------------------------------------------------------------===//
 
 /// Provides an observed read/write access to the value of the atomic state type.
-@MainActor @propertyWrapper public final class Bind<Value>: ObservableObject, DynamicProperty {
+@MainActor @propertyWrapper public struct Bind<Value>: DynamicProperty {
+    @ObservedObject var observedValue = ObservableAtomicValue()
     @Injected(\.decisionCore) var core
 
-    public let objectWillChange = ObservableObjectPublisher()
-
     public var wrappedValue: Value {
-        get { getValue(reader) }
-        set { setValue(writer, newValue) }
+        get {
+            core.instance.observationSystem.subscribe(observedValue, for: key)
+            return getValue(reader)
+        }
+        nonmutating set {
+            setValue(writer, newValue)
+        }
+    }
+
+    public var projectedValue: Binding<Value> {
+        Binding(
+            get: { wrappedValue },
+            set: { wrappedValue = $0 }
+        )
     }
 
     var reader: StorageReader {
@@ -69,14 +84,19 @@ import SwiftUI
         core.instance.writer()
     }
 
-    init(getValue: @escaping (StorageReader) -> Value, setValue: @escaping (StorageWriter, Value) -> Void) {
+    let key: StorageKey
+    init(key: StorageKey, getValue: @escaping (StorageReader) -> Value, setValue: @escaping (StorageWriter, Value) -> Void) {
         self.getValue = getValue
         self.setValue = setValue
+        self.key = key
     }
 
     private let getValue: @MainActor (StorageReader) -> Value
     private let setValue: @MainActor (StorageWriter, Value) -> Void
+
+    nonisolated public func update() {
+        print("SwiftUI: dynamic property update for  \(key)")
+    }
 }
 
 extension Observe: Injectable {}
-
