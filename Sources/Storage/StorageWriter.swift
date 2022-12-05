@@ -38,7 +38,6 @@ import Foundation
         let end = post.writeStart(key: key, owner: owner)
         defer {
             onWrite(key)
-            print("key: \(key), value: \(value)")
             observations.didChangeValue(for: key)
             end()
         }

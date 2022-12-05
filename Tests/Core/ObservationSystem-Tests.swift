@@ -25,9 +25,9 @@ import Combine
         let publisher = ObservableAtomicValue()
         sut.subscribe(publisher, for: IntStateSample.key)
 
-        XCTAssert(sut.observations[IntStateSample.key]?.count == 1)
+        XCTAssert(sut.storage.storage[IntStateSample.key]?.count == 1)
         let storedPublisher = sut
-            .observations[IntStateSample.key]!
+            .storage.storage[IntStateSample.key]!
             .first!
             .value!
 
@@ -42,8 +42,8 @@ import Combine
         sut.subscribe(publisher1, for: IntStateSample.key)
         sut.subscribe(publisher2, for: IntStateSample.key)
 
-        XCTAssert(sut.observations[IntStateSample.key]?.count == 2)
-        let keyObservations = sut.observations[IntStateSample.key]!
+        XCTAssert(sut.storage.storage[IntStateSample.key]?.count == 2)
+        let keyObservations = sut.storage.storage[IntStateSample.key]!
 
         XCTAssertTrue(
             keyObservations.contains { ref in
@@ -64,11 +64,11 @@ import Combine
 
         sut.subscribe(publisher1, for: IntStateSample.key)
         sut.subscribe(publisher2, for: IntStateSample.key)
-        
+
         sut.didChangeValue(for: Set([IntStateSample.key]))
 
-        XCTAssertFalse(sut.observations.keys.contains(IntStateSample.key))
-        XCTAssertTrue(sut.observations.keys.count == 0)
+        XCTAssertFalse(sut.storage.storage.keys.contains(IntStateSample.key))
+        XCTAssertTrue(sut.storage.storage.keys.count == 0)
     }
 
     func test_TwoKeys_mustRemove_publishersOfKey_mustKeep_publisherOfOtherKey() {
@@ -82,9 +82,9 @@ import Combine
 
         sut.didChangeValue(for: Set([IntStateSample.key]))
 
-        XCTAssertFalse(sut.observations.keys.contains(IntStateSample.key))
-        XCTAssertTrue(sut.observations.keys.contains(StringStateSample.key))
+        XCTAssertFalse(sut.storage.storage.keys.contains(IntStateSample.key))
+        XCTAssertTrue(sut.storage.storage.keys.contains(StringStateSample.key))
 
-        XCTAssertTrue(sut.observations.keys.count == 1)
+        XCTAssertTrue(sut.storage.storage.keys.count == 1)
     }
 }

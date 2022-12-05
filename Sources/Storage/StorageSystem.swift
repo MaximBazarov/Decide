@@ -18,8 +18,6 @@ import Foundation
 import Inject
 import OSLog
 
-private let log_storage = Logger(subsystem: "im.mks.decide.storage_system", category: "Storage System")
-
 //===----------------------------------------------------------------------===//
 // MARK: - Storage System
 //===----------------------------------------------------------------------===//

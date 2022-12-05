@@ -43,7 +43,3 @@ final class StringStateSample: AtomicState {
 func id<T>(_ object: T) -> ObjectIdentifier {
     ObjectIdentifier(object as AnyObject)
 }
-
-func async_sleep(ms: Int) async {
-    try? await Task.sleep(for: .milliseconds(ms))
-}

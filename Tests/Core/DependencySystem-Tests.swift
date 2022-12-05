@@ -25,22 +25,28 @@ import XCTest
 
         let result = sut.popDependencies(of: C.key)
 
-        let expected = Set([
+        let expected = [
             A.key, B.key, C.key, D.key, E.key, F.key
-        ])
+        ]
 
         AssertStorageKeySet(result, isExactly: expected)
     }
 
-    func test_Graph_e() {
+    func test_Graph_ABCDEF_pop_F_mustReturn_no_dependencies() {
         let sut = DependencyGraph()
-        sut.add(dependency: IntStateSample.key, thatInvalidates: StringStateSample.key)
-        let dependencies = sut.popDependencies(of: IntStateSample.key)
+        sut.mock_ABCDEF_ABCA_cycle()
+
+        let result = sut.popDependencies(of: F.key)
+
+        let expected = [F.key]
+
+        AssertStorageKeySet(result, isExactly: expected)
     }
 
 }
 
-func AssertStorageKeySet(_ actual: Set<StorageKey>, isExactly expected: Set<StorageKey>, _ file: StaticString = #file, _ line: UInt = #line) {
+func AssertStorageKeySet(_ actual: Set<StorageKey>, isExactly expected: [StorageKey], _ file: StaticString = #file, _ line: UInt = #line) {
+    let expected = Set(expected)
     var unexpected = Set<StorageKey>()
     actual.forEach { key in
         if !expected.contains(key) { unexpected.insert(key) }

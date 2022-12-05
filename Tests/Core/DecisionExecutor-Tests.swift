@@ -49,33 +49,32 @@ enum Step: AtomicState {
     }
 
     struct MakeStep: Decision {
+        let completed: XCTestExpectation
+
         func execute(read: Decide.StorageReader, write: Decide.StorageWriter) -> Decide.Effect {
             let currentValue = read(Counter.self)
             let step = read(Step.self)
             let nextValue = currentValue + step
             write(nextValue, into: Counter.self)
-            return NextStep()
+            return NextStep(completed: completed)
         }
     }
 
     struct NextStep: Effect {
+        let completed: XCTestExpectation
+
         func perform(read: StorageReader) async -> Decision {
             let goal = await read(Goal.self)
             let count = await read(Counter.self)
-            guard count < goal else { return noDecision }
-            return await MakeStep()
+            guard count < goal else {
+                completed.fulfill()
+                return noDecision
+            }
+            return MakeStep(completed: completed)
         }
     }
 
-    enum CounterX10: Computation {
-        static func compute(read: StorageReader) -> Int {
-            read(Counter.self) * 10
-        }
-    }
-
-    @Observe(CounterX10.self) var counterX10
-
-    func test_Vanilla() {
+    func test_Vanilla() { /* profiling, XCMe */
         let step = 10
         let goal = 100
         var counter = 0
@@ -86,35 +85,27 @@ enum Step: AtomicState {
     }
 
     func test_DecisionExecution_Observing() {
+        let exp = expectation(description: "")
         let core = DecisionCore()
         let sut = ConsumerUseCase(core: core)
         let read = core.reader()
 
         sut.render()
         core.execute(ConfigureCounter(initial: 0, goal: 100, step: 10))
-        core.execute(MakeStep())
-        while read(Counter.self) < read(Goal.self) {
-        }
+        core.execute(MakeStep(completed: exp))
 
+        wait(for: [exp], timeout: 0.1)
+        /*
+         Currently failing, needs Context to debug what's going on.
+         XCTAssertEqual([10, 20, 30, 40, 50, 60, 70, 80, 90, 100], sut.counterUpdatesReceived)
+         */
         XCTAssertEqual(read(Counter.self), 100)
-    }
-
-    func test_Observations_ProduceCorrectValueSequences() {
-        let core = DecisionCore()
-        let sut = ConsumerUseCase(core: core)
-        let write = core.writer()
-        let read = core.reader()
-
-        sut.render()
-        let i = read(IntStateSample.self)
-        let s = read(StringStateSample.self)
-        write("\(s), \(i)", into: StringStateSample.self)
     }
 }
 
 final class ConsumerUseCase {
     @Observe(Counter.self) var counter
-
+    var counterUpdatesReceived: [Int] = []
 
     let core: DecisionExecutor
     var cancel: AnyCancellable!
@@ -122,15 +113,12 @@ final class ConsumerUseCase {
     init(core: DecisionExecutor) {
         self.core = core
         _counter.core.override(with: core)
-        self.cancel = _counter.objectWillChange.sink { [render] value in
-            render()
+        self.cancel = _counter.observedValue.objectWillChange.sink {
+            self.render()
         }
     }
 
     @MainActor func render() {
-        print("RENDER: counter: \(counter)")
+        self.counterUpdatesReceived.append(self.counter)
     }
-
-
-
 }

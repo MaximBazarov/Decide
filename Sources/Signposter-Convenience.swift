@@ -19,13 +19,16 @@ import OSLog
 final class Signposter {
     let id: OSSignpostID
     let signposter: OSSignposter
+    let logger: Logger
 
     init() {
         self.signposter = OSSignposter(subsystem: "im.mks.decide.signpost", category: "Core")
         self.id = signposter.makeSignpostID()
+        self.logger = Logger(subsystem: "im.mks.decide.log", category: "Core")
     }
 
     nonisolated func emitEvent(_ name: StaticString) {
         signposter.emitEvent(name, id: id)
     }
+
 }

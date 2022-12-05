@@ -24,8 +24,10 @@ import SwiftUI
 
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Observe<Value>: DynamicProperty {
-    @ObservedObject var observedValue = ObservableAtomicValue()
-    @Injected(\.decisionCore) var core
+    @ObservedObject public private(set)
+    var observedValue = ObservableAtomicValue()
+
+    @Injected(\.decisionCore) public var core
 
     @MainActor public var wrappedValue: Value {
         get {
