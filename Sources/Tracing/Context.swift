@@ -77,6 +77,6 @@ public final class Context {
 
 extension Context: CustomDebugStringConvertible {
     public var debugDescription: String {
-        "[ \(className) ] \(fileID), L\(line):C\(column) | \(function)"
+        "\nsymbol: \(className),\nfile: \(file):\(line)\ncolumn\(column),\nfunction: \(function)"
     }
 }

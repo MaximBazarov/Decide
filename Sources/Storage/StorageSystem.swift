@@ -35,10 +35,11 @@ public protocol StorageSystem {
     /// - Returns: value of the state.
     @MainActor func getValue<T>(
         for key: StorageKey,
-        onBehalf ownerKey: StorageKey?
+        onBehalf ownerKey: StorageKey?,
+        context: Context
     ) throws -> T
 
-    @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?)
+    @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context)
 }
 
 //===----------------------------------------------------------------------===//
@@ -53,7 +54,7 @@ public typealias ValueProvider<T> = @MainActor () -> T
 //===----------------------------------------------------------------------===//
 
 @MainActor final class InMemoryStorage: StorageSystem {
-    public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
+    public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) throws -> T {
         let post = Signposter()
         let end = post.readStart(key: key, owner: ownerKey)
         defer { end() }
@@ -62,10 +63,11 @@ public typealias ValueProvider<T> = @MainActor () -> T
         return value
     }
 
-    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) {
         let post = Signposter()
-        let end = post.writeStart(key: key, owner: ownerKey)
+        let end = post.writeStart(key: key, owner: ownerKey, context: context)
         defer { end() }
+        post.logger.trace("Storage set value: \(String(describing: value)) into key: \(key.debugDescription) \n\(context.debugDescription)")
         values[key] = value
     }
 
@@ -110,12 +112,12 @@ private extension Signposter {
         }
     }
 
-    nonisolated func writeStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+    nonisolated func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
         let name: StaticString = "Storage: write"
         let state = signposter.beginInterval(
             name,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))\n\(context.debugDescription)"
         )
         return { [signposter] in
             signposter.endInterval(name, state)

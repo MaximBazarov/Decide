@@ -33,15 +33,15 @@ import Foundation
         self.observations = observations
     }
 
-    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?) {
+    func write<T>(_ value: T, for key: StorageKey, onBehalf owner: StorageKey?, context: Context) {
         let post = Signposter()
-        let end = post.writeStart(key: key, owner: owner)
+        let end = post.writeStart(key: key, owner: owner, context: context)
         defer {
             onWrite(key)
             observations.didChangeValue(for: key)
             end()
         }
-        storage.setValue(value, for: key, onBehalf: owner)
+        storage.setValue(value, for: key, onBehalf: owner, context: context)
     }
 }
 
@@ -52,7 +52,7 @@ import Foundation
 
 private extension Signposter {
 
-    nonisolated func writeStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+    nonisolated func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
         let name: StaticString = "Storage Writer: write"
         let state = signposter.beginInterval(
             name,

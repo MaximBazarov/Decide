@@ -57,7 +57,8 @@ import OSLog
     func read<T>(
         key: StorageKey,
         fallbackValue: ValueProvider<T>,
-        shouldStoreDefaultValue: Bool
+        shouldStoreDefaultValue: Bool,
+        context: Context
     ) -> T {
         let post = Signposter()
         let end = post.readStart(key: key, owner: ownerKey)
@@ -68,7 +69,8 @@ import OSLog
             }
             let value: T = try storage.getValue(
                 for: key,
-                onBehalf: ownerKey
+                onBehalf: ownerKey,
+                context: context
             )
 
             return value
@@ -79,7 +81,7 @@ import OSLog
             let newValue = fallbackValue()
             if shouldStoreDefaultValue {
                 onWrite(key)
-                storage.setValue(newValue, for: key, onBehalf: key)
+                storage.setValue(newValue, for: key, onBehalf: key, context: context)
             }
             return newValue
         }
