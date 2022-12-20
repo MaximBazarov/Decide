@@ -23,6 +23,18 @@ import Inject
     let storage = ObservationStorage()
 
     func subscribe(
+        _ publisher: ObservableAtomicValue,
+        for key: StorageKey
+    ) {
+        let poster = Signposter()
+        let end = poster.addObservationStart(key)
+        poster.logger.debug("Observe \(key.debugDescription)")
+        defer { end() }
+        let observation = Observation(id: ObjectIdentifier(publisher), publisher.send)
+        storage.add(observation, for: key)
+    }
+    
+    func subscribe(
         observationID: AnyHashable,
         send: @escaping () -> Void,
         for key: StorageKey
