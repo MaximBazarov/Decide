@@ -41,3 +41,17 @@ extension Decision {
             .last ?? "<UNTITLED>"
     }
 }
+
+public struct DecisionEffect: Effect {
+    let decision: Decision
+
+    public func perform(read: StorageReader) async -> Decision {
+        decision
+    }
+}
+
+public extension Decision {
+    var asEffect: Effect {
+        DecisionEffect(decision: self)
+    }
+}

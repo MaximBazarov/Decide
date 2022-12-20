@@ -39,3 +39,18 @@ extension Effect {
         return String(name)
     }
 }
+
+
+public struct EffectDecision: Decision {
+    let effect: Effect
+
+    public func execute(read: StorageReader, write: StorageWriter) -> Effect {
+        effect
+    }
+}
+
+public extension Effect {
+    var asDecision: Decision {
+        EffectDecision(effect: self)
+    }
+}
