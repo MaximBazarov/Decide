@@ -31,7 +31,7 @@ import SwiftUI
 
     @MainActor public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observedValue, for: key)
+            core.instance.observationSystem.subscribe(observationID: ObjectIdentifier(observedValue), send: observedValue.send, for: key)
             let value = getValue(reader)
             return value
         }
@@ -61,7 +61,7 @@ import SwiftUI
 
     public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observedValue, for: key)
+            core.instance.observationSystem.subscribe(observationID: ObjectIdentifier(observedValue), send: observedValue.send, for: key)
             return getValue(reader)
         }
         nonmutating set {
@@ -98,6 +98,8 @@ import SwiftUI
         print("SwiftUI: dynamic property update for  \(key)")
     }
 }
+
+
 
 extension Observe: Injectable {}
 

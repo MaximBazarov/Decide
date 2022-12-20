@@ -100,7 +100,6 @@ import OSLog
                 onWrite(key)
                 storage.invalidate(keys: dependencies.popDependencies(of: key), changed: key)
                 storage.setValue(newValue, for: key, onBehalf: key, context: context)
-                
             }
             return newValue
         }
