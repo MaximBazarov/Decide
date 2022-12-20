@@ -66,7 +66,7 @@ public extension StorageKey {
 
 extension StorageKey {
     public var debugDescription: String {
-        return Self.pretty(_typeName)
+        return Self.pretty(_typeName) + "  \(self.additionalKeys.map{ $0.debugDescription }.joined(separator: ", "))"
     }
 
     static func pretty(_ value: String) -> String {

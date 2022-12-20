@@ -22,15 +22,28 @@ import Inject
 
     let storage = ObservationStorage()
 
-    func subscribe<T: ObservableAtomicValue>(
-        _ observableAtomicValue: T,
+    func subscribe(
+        _ publisher: ObservableAtomicValue,
         for key: StorageKey
     ) {
         let poster = Signposter()
         let end = poster.addObservationStart(key)
         poster.logger.debug("Observe \(key.debugDescription)")
         defer { end() }
-        let observation = ObservableAtomicValue.WeakRef(observableAtomicValue)
+        let observation = Observation(id: ObjectIdentifier(publisher), publisher.send)
+        storage.add(observation, for: key)
+    }
+    
+    func subscribe(
+        observationID: AnyHashable,
+        send: @escaping () -> Void,
+        for key: StorageKey
+    ) {
+        let poster = Signposter()
+        let end = poster.addObservationStart(key)
+        poster.logger.debug("Observe \(key.debugDescription)")
+        defer { end() }
+        let observation = Observation(id: observationID, send)
         storage.add(observation, for: key)
     }
 
@@ -39,13 +52,13 @@ import Inject
         let end = poster.popObservationsStart(keys)
         poster.logger.debug("Value changed for keys: \(keys.description)")
         defer {
-            poster.logger.trace("Notified observers of  \(keys.description)")
             end()
         }
         let observers = Set(keys.flatMap { storage.pop(observationsOf: $0) })
 
+        poster.logger.trace("Notified observers of  \(observers.count)")
         observers.forEach { observer in
-            observer.value?.send()
+            observer.send()
         }
     }
 
@@ -60,39 +73,25 @@ public final class ObservableAtomicValue: ObservableObject, Hashable {
     public func send() { objectWillChange.send() }
 
     public static func == (lhs: ObservableAtomicValue, rhs: ObservableAtomicValue) -> Bool {
-        ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+
+        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
-    }
-
-    final class WeakRef: Hashable {
-        weak var value: ObservableAtomicValue?
-        init(_ value: ObservableAtomicValue) {
-            self.value = value
-        }
-
-        static func == (lhs: WeakRef, rhs: WeakRef) -> Bool {
-            ObjectIdentifier(lhs.value as AnyObject) == ObjectIdentifier(rhs.value as AnyObject)
-        }
-
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(ObjectIdentifier(self.value as AnyObject))
-        }
-    }
+    }    
 }
 
 final class ObservationStorage {
-    var storage: [StorageKey: Set<ObservableAtomicValue.WeakRef>] = [:]
+    var storage: [StorageKey: Set<Observation>] = [:]
 
-    func add(_ observation: ObservableAtomicValue.WeakRef, for key: StorageKey) {
+    func add(_ observation: Observation, for key: StorageKey) {
         var observationsOfKey = storage[key] ?? []
         observationsOfKey.insert(observation)
         storage[key] = observationsOfKey
     }
 
-    func pop(observationsOf key: StorageKey) -> Set<ObservableAtomicValue.WeakRef> {
+    func pop(observationsOf key: StorageKey) -> Set<Observation> {
         let observations = storage[key] ?? []
         storage.removeValue(forKey: key)
         return observations
@@ -130,10 +129,10 @@ extension Signposter {
     }
 }
 
-extension Set<ObservableAtomicValue.WeakRef> {
+extension Set<Observation> {
     var prettyPrint: String {
         return self
-            .map { ObjectIdentifier($0.value as AnyObject) }
+            .map { $0.id }
             .map {
                 $0.debugDescription
                     .replacingOccurrences(of: "ObjectIdentifier", with: "")
