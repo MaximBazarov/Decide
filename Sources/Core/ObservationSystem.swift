@@ -28,6 +28,7 @@ import Inject
     ) {
         let poster = Signposter()
         let end = poster.addObservationStart(key)
+        poster.logger.debug("Observe \(key.debugDescription)")
         defer { end() }
         let observation = ObservableAtomicValue.WeakRef(observableAtomicValue)
         storage.add(observation, for: key)
@@ -36,16 +37,16 @@ import Inject
     func didChangeValue(for keys: Set<StorageKey>) {
         let poster = Signposter()
         let end = poster.popObservationsStart(keys)
-        defer { end() }
         poster.logger.debug("Value changed for keys: \(keys.description)")
-
+        defer {
+            poster.logger.trace("Notified observers of  \(keys.description)")
+            end()
+        }
         let observers = Set(keys.flatMap { storage.pop(observationsOf: $0) })
 
-        poster.logger.debug("Notified: \(observers.prettyPrint)")
         observers.forEach { observer in
             observer.value?.send()
         }
-
     }
 
     func didChangeValue(for key: StorageKey) {
@@ -103,12 +104,13 @@ final class ObservationStorage {
 //===----------------------------------------------------------------------===//
 
 extension Signposter {
+
     nonisolated func popObservationsStart(_ keys: Set<StorageKey>) -> () -> Void {
-        let name: StaticString = "Observers: pop"
+        let name: StaticString = "Observers"
         let state = signposter.beginInterval(
             name,
             id: id,
-            "keys: \(keys.map{ $0.debugDescription }, privacy: .private(mask: .hash))"
+            "Pop keys: \(keys.map{ $0.debugDescription }, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
             signposter.endInterval(name, state)
@@ -116,11 +118,11 @@ extension Signposter {
     }
 
     nonisolated func addObservationStart(_ key: StorageKey) -> () -> Void {
-        let name: StaticString = "Observers: add"
+        let name: StaticString = "Observers"
         let state = signposter.beginInterval(
             name,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+            "Add key: \(key.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
             signposter.endInterval(name, state)

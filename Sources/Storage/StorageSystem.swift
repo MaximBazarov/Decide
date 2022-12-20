@@ -35,10 +35,12 @@ public protocol StorageSystem {
     /// - Returns: value of the state.
     @MainActor func getValue<T>(
         for key: StorageKey,
-        onBehalf ownerKey: StorageKey?
+        onBehalf ownerKey: StorageKey?,
+        context: Context
     ) throws -> T
 
-    @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?)
+    @MainActor func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context)
+    @MainActor func invalidate(keys: Set<StorageKey>, changed: StorageKey)
 }
 
 //===----------------------------------------------------------------------===//
@@ -53,20 +55,32 @@ public typealias ValueProvider<T> = @MainActor () -> T
 //===----------------------------------------------------------------------===//
 
 @MainActor final class InMemoryStorage: StorageSystem {
-    public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?) throws -> T {
+    public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) throws -> T {
         let post = Signposter()
         let end = post.readStart(key: key, owner: ownerKey)
         defer { end() }
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
         guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
+        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) returns: \(String(describing: value)) for key: \(key.debugDescription) owner: \(ownerKey.debugDescription, privacy: .private(mask: .hash))")
         return value
     }
 
-    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?) {
+    public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) {
         let post = Signposter()
-        let end = post.writeStart(key: key, owner: ownerKey)
+        let end = post.writeStart(key: key, owner: ownerKey, context: context)
         defer { end() }
+        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) set value: \(String(describing: value)) into key: \(key.debugDescription) \n\(context.debugDescription)")        
         values[key] = value
+    }
+
+    @MainActor func invalidate(keys: Set<StorageKey>, changed: StorageKey) {
+        let post = Signposter()
+        let end = post.invalidateDependenciesStart(keys: keys, key: changed)
+        defer { end() }
+        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) invalidates: \(keys.debugDescription, privacy: .private(mask: .hash))")
+        keys.forEach { key in
+            values.removeValue(forKey: key)
+        }
     }
 
     // MARK: Values
@@ -96,29 +110,39 @@ public final class ValueTypeMismatch: Error {
 //===----------------------------------------------------------------------===//
 // MARK: - Logging
 //===----------------------------------------------------------------------===//
+let storageOperations: StaticString = "Storage"
 
 private extension Signposter {
-    nonisolated func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
-        let name: StaticString = "Storage: read"
+    nonisolated func invalidateDependenciesStart(keys: Set<StorageKey>, key: StorageKey) -> () -> Void {
         let state = signposter.beginInterval(
-            name,
+            dependencyOperations,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+            "invalidate: \(key.debugDescription, privacy: .private(mask: .hash)), dependencies: \(keys.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(name, state)
+            signposter.endInterval(dependencyOperations, state)
         }
     }
 
-    nonisolated func writeStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
-        let name: StaticString = "Storage: write"
+    nonisolated func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
         let state = signposter.beginInterval(
-            name,
+            storageOperations,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+            "read: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(name, state)
+            signposter.endInterval(storageOperations, state)
+        }
+    }
+
+    nonisolated func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
+        let state = signposter.beginInterval(
+            storageOperations,
+            id: id,
+            "write: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))\n\(context.debugDescription)"
+        )
+        return { [signposter] in
+            signposter.endInterval(storageOperations, state)
         }
     }
 }
