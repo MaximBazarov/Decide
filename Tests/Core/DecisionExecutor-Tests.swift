@@ -40,8 +40,8 @@ enum Step: AtomicState {
         let step: Int
 
         func execute(read: StorageReader, write: StorageWriter) -> Decide.Effect {
-            let x = read(IntStateSample.self)
-            write(x+1, into: IntStateSample.self)
+            let x = read(IntStateSample.self, context: .here())
+            write(x+1, into: IntStateSample.self, context: .here())
             write(goal, into: Goal.self)
             write(step, into: Step.self)
             return noEffect
@@ -52,8 +52,8 @@ enum Step: AtomicState {
         let completed: XCTestExpectation
 
         func execute(read: Decide.StorageReader, write: Decide.StorageWriter) -> Decide.Effect {
-            let currentValue = read(Counter.self)
-            let step = read(Step.self)
+            let currentValue = read(Counter.self, context: .here())
+            let step = read(Step.self, context: .here())
             let nextValue = currentValue + step
             write(nextValue, into: Counter.self)
             return NextStep(completed: completed)
@@ -64,8 +64,8 @@ enum Step: AtomicState {
         let completed: XCTestExpectation
 
         func perform(read: StorageReader) async -> Decision {
-            let goal = await read(Goal.self)
-            let count = await read(Counter.self)
+            let goal = await read(Goal.self, context: .here())
+            let count = await read(Counter.self, context: .here())
             guard count < goal else {
                 completed.fulfill()
                 return noDecision
@@ -99,7 +99,7 @@ enum Step: AtomicState {
          Currently failing, needs Context to debug what's going on.
          XCTAssertEqual([10, 20, 30, 40, 50, 60, 70, 80, 90, 100], sut.counterUpdatesReceived)
          */
-        XCTAssertEqual(read(Counter.self), 100)
+        XCTAssertEqual(read(Counter.self, context: .here()), 100)
     }
 }
 

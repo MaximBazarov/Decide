@@ -27,7 +27,7 @@ import XCTest
         let sut = InMemoryStorage()
         let key = IntStateSample.key
         do {
-            let _: Int = try sut.getValue(for: key, onBehalf: nil)
+            let _: Int = try sut.getValue(for: key, onBehalf: nil, context: .here())
             XCTFail("Must not return value, before it was written.")
         } catch is NoValueInStorage {
             // Expected
@@ -39,8 +39,8 @@ import XCTest
     func test_WrittenValue_mustReturn_writtenValue() {
         let sut = InMemoryStorage()
         let key = IntStateSample.key
-        sut.setValue(10, for: key, onBehalf: nil)
-        let result: Int? = try? sut.getValue(for: key, onBehalf: nil)
+        sut.setValue(10, for: key, onBehalf: nil, context: .here())
+        let result: Int? = try? sut.getValue(for: key, onBehalf: nil, context: .here())
         XCTAssertEqual(10, result)
     }
 
@@ -55,7 +55,7 @@ import XCTest
 
         let read = sut.reader()
 
-        let result = read(IntStateSample.self)
+        let result = read(IntStateSample.self, context: .here())
 
         XCTAssertEqual(intDefaultValue, result)
     }
@@ -63,8 +63,8 @@ import XCTest
     func test_StorageReader_AtomicState_WrittenValue_mustReturn_writtenValue() {
         let sut = InMemoryStorage()
 
-        sut.setValue(10, for: IntStateSample.key, onBehalf: nil)
-        let result: Int? = try? sut.getValue(for: IntStateSample.key, onBehalf: nil)
+        sut.setValue(10, for: IntStateSample.key, onBehalf: nil, context: .here())
+        let result: Int? = try? sut.getValue(for: IntStateSample.key, onBehalf: nil, context: .here())
 
         XCTAssertEqual(10, result)
     }

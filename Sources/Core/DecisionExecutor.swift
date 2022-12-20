@@ -85,6 +85,10 @@ public extension DecisionCore {
     var observationSystem: ObservationSystem {
         _observation
     }
+
+    internal var dependencySystem: DependencySystem {
+        _dependencies
+    }
 }
 
 // MARK: Props/Init
@@ -101,8 +105,23 @@ public extension DecisionCore {
 
     init(storage: StorageSystem? = nil,
          dependencies: DependencySystem? = nil,
-         observation: ObservationSystem? = nil
+         observation: ObservationSystem? = nil,
+         file: String = #file,
+         fileID: String = #fileID,
+         line: Int = #line,
+         column: Int = #column,
+         function: String = #function
     ) {
+        let context: Context = Context(
+            className: function,
+            file: file,
+            fileID: fileID,
+            line: line,
+            column: column,
+            function: function
+        )
+        let post = Signposter()
+        post.logger.trace("Core initialized, context: \(context.debugDescription)")
         let storage = storage ?? InMemoryStorage()
         let dependencies = dependencies ?? DependencyGraph()
         let observation = observation ?? ObservationSystem()
