@@ -38,10 +38,12 @@ import Foundation
         let end = post.writeStart(key: key, owner: owner, context: context)
         defer {
             onWrite(key)
-            observations.didChangeValue(for: key)
             end()
         }
+        let keyDependencies = dependencies.popDependencies(of: key)
+        storage.invalidate(keys: keyDependencies, changed: key)
         storage.setValue(value, for: key, onBehalf: owner, context: context)
+        observations.didChangeValue(for: key)
     }
 }
 
@@ -53,14 +55,13 @@ import Foundation
 private extension Signposter {
 
     nonisolated func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
-        let name: StaticString = "Storage Writer: write"
         let state = signposter.beginInterval(
-            name,
+            readWriteOperations,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
+            "write: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(name, state)
+            signposter.endInterval(readWriteOperations, state)
         }
     }
 }

@@ -27,7 +27,7 @@ import SwiftUI
     @ObservedObject public private(set)
     var observedValue = ObservableAtomicValue()
 
-    @Injected(\.decisionCore) public var core
+    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) public var core
 
     @MainActor public var wrappedValue: Value {
         get {
@@ -57,7 +57,7 @@ import SwiftUI
 /// Provides an observed read/write access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Bind<Value>: DynamicProperty {
     @ObservedObject var observedValue = ObservableAtomicValue()
-    @Injected(\.decisionCore) var core
+    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
 
     public var wrappedValue: Value {
         get {
@@ -100,3 +100,22 @@ import SwiftUI
 }
 
 extension Observe: Injectable {}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Logging
+//===----------------------------------------------------------------------===//
+let propertyWrappersOperations: StaticString = "@ Observe/Bind"
+
+extension Signposter {
+    nonisolated func subscribed(_ key: StorageKey, context: Context) -> () -> Void {
+        let state = signposter.beginInterval(
+            propertyWrappersOperations,
+            id: id,
+            "+  \(key.debugDescription, privacy: .private(mask: .hash)) context: \(context.debugDescription)"
+        )
+        return { [signposter] in
+            signposter.endInterval(propertyWrappersOperations, state)
+        }
+    }
+}

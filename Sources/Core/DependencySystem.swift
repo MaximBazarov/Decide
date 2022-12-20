@@ -39,12 +39,16 @@ extension DependencyGraph {
     func add(dependency: StorageKey, thatInvalidates key: StorageKey) {
         let signposter = Signposter()
         let end = signposter.addDependenciesStart(key)
-        defer { end() }
+        defer {
+            signposter.logger.trace("+ \(dependency.debugDescription, privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
+            end()
+        }
         guard dependencies.keys.contains(dependency)
         else {
             dependencies[dependency] = Set([key])
             return
         }
+
         dependencies[dependency]?.insert(key)
     }
 
@@ -64,6 +68,7 @@ extension DependencyGraph {
             dependencies.removeValue(forKey: $0)
         }
         dependencies.removeValue(forKey: key)
+        signposter.logger.trace("pop: \(result.map{ $0.debugDescription }.joined(separator: "\n"), privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
         return result
     }
 }
@@ -115,28 +120,28 @@ private extension DependencyGraph {
 // MARK: - Logging
 //===----------------------------------------------------------------------===//
 
+let dependencyOperations: StaticString = "Dependency"
+
 extension Signposter {
     nonisolated func popDependenciesStart(_ key: StorageKey) -> () -> Void {
-        let name: StaticString = "Dependency: pop"
         let state = signposter.beginInterval(
-            name,
+            dependencyOperations,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+            "pop: \(key.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(name, state)
+            signposter.endInterval(dependencyOperations, state)
         }
     }
 
     nonisolated func addDependenciesStart(_ key: StorageKey) -> () -> Void {
-        let name: StaticString = "Dependency: add"
         let state = signposter.beginInterval(
-            name,
+            dependencyOperations,
             id: id,
-            "key: \(key.debugDescription, privacy: .private(mask: .hash))"
+            "+ Add: \(key.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(name, state)
+            signposter.endInterval(dependencyOperations, state)
         }
     }
 }
