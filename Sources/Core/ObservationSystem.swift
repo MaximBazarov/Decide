@@ -20,31 +20,18 @@ import Inject
 /// Keyed with ``StorageKey`` set weak references to `ObservableObjectPublisher`
 @MainActor public final class ObservationSystem {
 
+    private let poster = Signposter()
     let storage = ObservationStorage()
 
     func subscribe(
-        _ publisher: ObservableAtomicValue,
+        _ publisher: ObservableValue,
         for key: StorageKey
     ) {
-        let poster = Signposter()
-        let end = poster.addObservationStart(key)
+        let endInterval = poster.beginInterval_addObservation(key)
         poster.logger.debug("Observe \(key.debugDescription)")
-        defer { end() }
-        let observation = Observation(id: ObjectIdentifier(publisher), publisher.send)
-        storage.add(observation, for: key)
-    }
-    
-    func subscribe(
-        observationID: AnyHashable,
-        send: @escaping () -> Void,
-        for key: StorageKey
-    ) {
-        let poster = Signposter()
-        let end = poster.addObservationStart(key)
-        poster.logger.debug("Observe \(key.debugDescription)")
-        defer { end() }
-        let observation = Observation(id: observationID, send)
-        storage.add(observation, for: key)
+        defer { endInterval() }
+
+        storage.add(publisher, for: key)
     }
 
     func didChangeValue(for keys: Set<StorageKey>) {
@@ -67,31 +54,35 @@ import Inject
     }
 }
 
-public final class ObservableAtomicValue: ObservableObject, Hashable {
+
+/// ObservableObject for a value in ``StorageSystem``.
+public final class ObservableValue: ObservableObject, Hashable {
 
     public init() {}
     public func send() { objectWillChange.send() }
+    public var id: ObjectIdentifier {
+        ObjectIdentifier(self)
+    }
 
-    public static func == (lhs: ObservableAtomicValue, rhs: ObservableAtomicValue) -> Bool {
-
-        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+    public static func == (lhs: ObservableValue, rhs: ObservableValue) -> Bool {
+        return lhs.id == rhs.id
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(ObjectIdentifier(self))
+        hasher.combine(id)
     }    
 }
 
 final class ObservationStorage {
-    var storage: [StorageKey: Set<Observation>] = [:]
+    var storage: [StorageKey: Set<ObservableValue>] = [:]
 
-    func add(_ observation: Observation, for key: StorageKey) {
+    func add(_ observation: ObservableValue, for key: StorageKey) {
         var observationsOfKey = storage[key] ?? []
         observationsOfKey.insert(observation)
         storage[key] = observationsOfKey
     }
 
-    func pop(observationsOf key: StorageKey) -> Set<Observation> {
+    func pop(observationsOf key: StorageKey) -> Set<ObservableValue> {
         let observations = storage[key] ?? []
         storage.removeValue(forKey: key)
         return observations
@@ -116,7 +107,7 @@ extension Signposter {
         }
     }
 
-    nonisolated func addObservationStart(_ key: StorageKey) -> () -> Void {
+    nonisolated func beginInterval_addObservation(_ key: StorageKey) -> () -> Void {
         let name: StaticString = "Observers"
         let state = signposter.beginInterval(
             name,
@@ -129,7 +120,7 @@ extension Signposter {
     }
 }
 
-extension Set<Observation> {
+extension Set<ObservableValue> {
     var prettyPrint: String {
         return self
             .map { $0.id }

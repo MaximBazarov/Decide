@@ -25,13 +25,13 @@ import SwiftUI
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Observe<Value>: DynamicProperty {
     @ObservedObject public private(set)
-    var observedValue = ObservableAtomicValue()
+    var observedValue = ObservableValue()
 
     @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) public var core
 
     @MainActor public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observationID: ObjectIdentifier(observedValue), send: observedValue.send, for: key)
+            core.instance.observationSystem.subscribe(observedValue, for: key)
             let value = getValue(reader)
             return value
         }
@@ -56,12 +56,12 @@ import SwiftUI
 
 /// Provides an observed read/write access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Bind<Value>: DynamicProperty {
-    @ObservedObject var observedValue = ObservableAtomicValue()
+    @ObservedObject var observedValue = ObservableValue()
     @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
 
     public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observationID: ObjectIdentifier(observedValue), send: observedValue.send, for: key)
+            core.instance.observationSystem.subscribe(observedValue, for: key)
             return getValue(reader)
         }
         nonmutating set {
