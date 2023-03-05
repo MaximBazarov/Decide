@@ -20,47 +20,37 @@ import Combine
 
 @MainActor final class ObservationSystemTests: XCTestCase {
 
-    func disabled_test_Subscribe_mustAdd_Publisher() {
+    func test_Atomic_Subscribe_mustAdd_Publisher() {
         let sut = ObservationSystem()
-        let publisher = ObservableAtomicValue()
-        sut.subscribe(publisher, for: IntStateSample.key)
+        let publisher = ObservableValue()
+        let key = IntStateSample.key
 
-        XCTAssert(sut.storage.storage[IntStateSample.key]?.count == 1)
-        let storedPublisher = sut
-            .storage.storage[IntStateSample.key]!
-            .first!
-            .id
+        sut.subscribe(publisher, for: key)
 
-        XCTAssert(id(storedPublisher) == id(publisher))
+        let storedPublisher = sut.storage.pop(observationsOf: key).first!
+
+        XCTAssertEqual(storedPublisher.id, publisher.id)
     }
 
-    func disabled_test_Subscribe_TwoPublishersSameKey_mustAdd_BothPublishers() {
+    func test_Atomic_Subscribe_TwoPublishers_SameKey_mustAdd_BothPublishers() {
         let sut = ObservationSystem()
-        let publisher1 = ObservableAtomicValue()
-        let publisher2 = ObservableAtomicValue()
+        let publisher1 = ObservableValue()
+        let publisher2 = ObservableValue()
+        let key = IntStateSample.key
 
-        sut.subscribe(publisher1, for: IntStateSample.key)
-        sut.subscribe(publisher2, for: IntStateSample.key)
+        sut.subscribe(publisher1, for: key)
+        sut.subscribe(publisher2, for: key)
 
-        XCTAssert(sut.storage.storage[IntStateSample.key]?.count == 2)
-        let keyObservations = sut.storage.storage[IntStateSample.key]!
+        let keyObservations = sut.storage.pop(observationsOf: key)
 
-        XCTAssertTrue(
-            keyObservations.contains { ref in
-                id(ref.id) == id(publisher1)
-            }
-        )
-        XCTAssertTrue(
-            keyObservations.contains { ref in
-                id(ref.id) == id(publisher2)
-            }
-        )
+        XCTAssertTrue(keyObservations.contains(publisher1))
+        XCTAssertTrue(keyObservations.contains(publisher2))
     }
 
     func test_Notify_mustRemove_AllPublishersOfKey() {
         let sut = ObservationSystem()
-        let publisher1 = ObservableAtomicValue()
-        let publisher2 = ObservableAtomicValue()
+        let publisher1 = ObservableValue()
+        let publisher2 = ObservableValue()
 
         sut.subscribe(publisher1, for: IntStateSample.key)
         sut.subscribe(publisher2, for: IntStateSample.key)
@@ -74,8 +64,8 @@ import Combine
     func test_TwoKeys_mustRemove_publishersOfKey_mustKeep_publisherOfOtherKey() {
         let sut = ObservationSystem()
 
-        let publisherKeep = ObservableAtomicValue()
-        let publisherRemove = ObservableAtomicValue()
+        let publisherKeep = ObservableValue()
+        let publisherRemove = ObservableValue()
 
         sut.subscribe(publisherKeep, for: StringStateSample.key)
         sut.subscribe(publisherRemove, for: IntStateSample.key)

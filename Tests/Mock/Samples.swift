@@ -34,12 +34,3 @@ let stringDefaultValue: String = "DEFAULT"
 final class StringStateSample: AtomicState {
     static func defaultValue() -> String { stringDefaultValue }
 }
-
-
-//===----------------------------------------------------------------------===//
-// MARK: - Utility
-//===----------------------------------------------------------------------===//
-
-func id<T>(_ object: T) -> ObjectIdentifier {
-    ObjectIdentifier(object as AnyObject)
-}

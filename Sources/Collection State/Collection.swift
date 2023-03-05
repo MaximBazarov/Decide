@@ -31,11 +31,14 @@ extension CollectionState {
 
 
 /// A wrapper of the collection states ``Observe`` to provide a get ``subscript(_:)`` for later access to the value.
-@MainActor public class CollectionStateAccess<State: CollectionState> {
-    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
+@MainActor public final class CollectionStateAccess<State: CollectionState> {
 
-    var stateUpdated: () -> Void = {}
-    var unsubscribe: AnyCancellable?
+    var get: (State.ID, Context) -> State.Value = { _, _ in
+        preconditionFailure("CollectionStateAccess: `get` must be set after the initialisation.")
+    }
+    var set: (State.Value, State.ID, Context) -> Void = { _, _, _ in
+        preconditionFailure("CollectionStateAccess: `set` must be set after the initialisation.")
+    }
 
     public subscript(
         _ id: State.ID,
@@ -54,31 +57,16 @@ extension CollectionState {
             function: function
         )
         return Binding<State.Value>(
-            get: {
-                let value = self.core.instance.reader().callAsFunction(State.self, at: id, context: context)
-                self.core.instance.observationSystem.subscribe(
-                    observationID: ObjectIdentifier(self),
-                    send: { [weak self] in
-                        self?.stateUpdated()
-                    },
-                    for: State.key(at: id)
-                )
-                return value
-            },
-            set: { newValue in
-                self.core.instance.writer().callAsFunction(newValue, into: State.self, at: id, context: context)
-            }
+            get: { self.get(id, context) },
+            set: { value in self.set(value, id, context) }
         )
     }
 }
 
-
 @MainActor @propertyWrapper public struct BindCollection<State: CollectionState>: DynamicProperty {
     @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
 
-    @ObservedObject var observedValue = ObservableAtomicValue()
-    
-    let stateAccess = CollectionStateAccess<State>()
+    @ObservedObject var observedValue = ObservableValue()
 
     public var wrappedValue: CollectionStateAccess<State> {
         nonmutating get { stateAccess }
@@ -92,12 +80,26 @@ extension CollectionState {
     }
 
     let state: State.Type
+    let stateAccess = CollectionStateAccess<State>()
+
     public init(_ state: State.Type) {
         self.state = state
-        let send = observedValue.objectWillChange.send
-        stateAccess.stateUpdated = {
-            send()
+
+        let observedValue = ObservableValue()
+        let read = core.instance.reader()
+        let write = core.instance.writer()
+        let subscribe = core.instance.observationSystem.subscribe
+
+        stateAccess.get =  { id, context in
+            let value = read(State.self, at: id, context: context)
+            subscribe(observedValue, State.key(at: id))
+            return value
         }
+        stateAccess.set = { newValue, id, context in
+            write(newValue, into: State.self, at: id, context: context)
+        }
+
+        self.observedValue = observedValue
     }
 
     nonisolated public func update() {
