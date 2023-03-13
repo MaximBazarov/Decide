@@ -14,10 +14,29 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Inject
-import Combine
+import SwiftUI
 import OSLog
 
+//===----------------------------------------------------------------------===//
+// MARK: - SwiftUI Environment
+//===----------------------------------------------------------------------===//
+struct CoreEnvironmentKey: EnvironmentKey {
+    @MainActor
+    static var defaultValue: DecisionExecutor = DecisionCore()
+}
+
+public extension EnvironmentValues {
+    var decisionCore: DecisionExecutor {
+        get { self[CoreEnvironmentKey.self] }
+        set { self[CoreEnvironmentKey.self] = newValue }
+    }
+}
+
+public extension View {
+    func decisionCore(_ core: DecisionExecutor) -> some View {
+        environment(\.decisionCore, core)
+    }
+}
 
 //===----------------------------------------------------------------------===//
 // MARK: - Decision Executor Protocol
@@ -47,37 +66,6 @@ import OSLog
 
 // MARK: Public
 public extension DecisionCore {
-    @MainActor func execute(_ decision: Decision) {
-        if isNoop(decision) { return }
-        let poster = Signposter()
-        let effect = poster.decisionStart(decision) {
-            var updatedKeys: Set<StorageKey> = []
-            _reader.onWrite = { updatedKeys.insert($0) }
-            _writer.onWrite = { updatedKeys.insert($0) }
-
-            //=== State Update
-            let effect = decision.execute(read: _reader, write: _writer)
-
-            //=== Traverse Dependency Graph
-            let updated = updatedKeys
-                .flatMap { _dependencies.popDependencies(of: $0) }
-
-            //=== Notify Observers
-            _observation.didChangeValue(for: Set<StorageKey>(updated))
-            return effect
-        }
-        // Execute effect if there's any
-        if isNoop(effect) { return }
-        let effectEnd = poster.effectStart(effect)
-        Task.detached(priority: .background) { [execute, _reader] in
-
-            let decision = await effect.perform(read: _reader)
-            Task.detached(priority: .high) { @MainActor in
-                effectEnd()
-                execute(decision)
-            }
-        }
-    }
 
     func writer() -> StorageWriter { _writer }
     func reader() -> StorageReader { _reader }
@@ -131,35 +119,38 @@ public extension DecisionCore {
         _reader = StorageReader(storage: storage, dependencies: dependencies, observations: observation)
         _writer = StorageWriter(storage: storage, dependencies: dependencies, observations: observation)
     }
-}
 
-//===----------------------------------------------------------------------===//
-// MARK: - Logging
-//===----------------------------------------------------------------------===//
+    public func execute(_ decision: Decision) {
+        if isNoop(decision) { return }
 
-extension Signposter {
-    nonisolated func decisionStart(_ decision: Decision, _ job: () -> Effect) -> Effect {
-        let name: StaticString = "Decision"
-        let state = signposter.beginInterval(
-            name,
-            id: id,
-            "decision: \(decision.debugDescription, privacy: .private(mask: .hash))"
-        )
-        defer {
-            signposter.endInterval(name, state)
-        }
-        return job()
-    }
+        var updatedKeys: Set<StorageKey> = []
+        _reader.onWrite = { updatedKeys.insert($0) }
+        _writer.onWrite = { updatedKeys.insert($0) }
 
-    nonisolated func effectStart(_ effect: Effect) -> () -> Void {
-        let name: StaticString = "Effect"
-        let state = signposter.beginInterval(
-            name,
-            id: id,
-            "effect: \(effect.debugDescription, privacy: .private(mask: .hash))"
-        )
-        return { [signposter] in
-            signposter.endInterval(name, state)
+        //=== State Update
+        let effect = decision.execute(read: _reader, write: _writer)
+
+        //=== Traverse Dependency Graph
+        let updated = updatedKeys
+            .flatMap { _dependencies.popDependencies(of: $0) }
+
+        //=== Notify Observers
+        _observation.didChangeValue(for: Set<StorageKey>(updated))
+
+        // Execute effect if there's any
+        if isNoop(effect) { return }
+        Task.detached {
+            await self.perform(effect)
         }
     }
+
+
+    /// Performs the effect and then executes the decision
+    nonisolated private func perform(_ effect: Effect) async {
+        let decision = await effect.perform(read: self.reader())
+        await self.execute(decision)
+    }
 }
+
+
+

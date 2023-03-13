@@ -14,9 +14,33 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Inject
 import Combine
 import SwiftUI
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Make Decision
+//===----------------------------------------------------------------------===//
+
+@MainActor @propertyWrapper public struct MakeDecision: DynamicProperty {
+
+    @Environment(\.decisionCore) var environmentCore
+    private var injectedCore: DecisionCore?
+
+    public init(core: DecisionCore? = nil) {
+        self.injectedCore = core
+    }
+
+    public var wrappedValue: @MainActor (Decision) -> Void {
+        get {
+            let core = self.injectedCore ?? environmentCore
+            return { decision in
+                core.execute(decision)
+            }
+        }
+    }
+}
+
 
 //===----------------------------------------------------------------------===//
 // MARK: - Observe
@@ -27,18 +51,18 @@ import SwiftUI
     @ObservedObject public private(set)
     var observedValue = ObservableValue()
 
-    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) public var core
+    @Environment(\.decisionCore) var core
 
     @MainActor public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observedValue, for: key)
+            core.observationSystem.subscribe(observedValue, for: key)
             let value = getValue(reader)
             return value
         }
     }
 
     private var reader: StorageReader {
-        core.instance.reader()
+        core.reader()
     }
 
     private let key: StorageKey
@@ -57,11 +81,12 @@ import SwiftUI
 /// Provides an observed read/write access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Bind<Value>: DynamicProperty {
     @ObservedObject var observedValue = ObservableValue()
-    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
+
+    @Environment(\.decisionCore) var core
 
     public var wrappedValue: Value {
         get {
-            core.instance.observationSystem.subscribe(observedValue, for: key)
+            core.observationSystem.subscribe(observedValue, for: key)
             return getValue(reader)
         }
         nonmutating set {
@@ -77,11 +102,11 @@ import SwiftUI
     }
 
     var reader: StorageReader {
-        core.instance.reader()
+        core.reader()
     }
 
     var writer: StorageWriter {
-        core.instance.writer()
+        core.writer()
     }
 
     let key: StorageKey
@@ -93,15 +118,7 @@ import SwiftUI
 
     private let getValue: @MainActor (StorageReader) -> Value
     private let setValue: @MainActor (StorageWriter, Value) -> Void
-
-    nonisolated public func update() {
-        print("SwiftUI: dynamic property update for  \(key)")
-    }
 }
-
-
-
-extension Observe: Injectable {}
 
 
 //===----------------------------------------------------------------------===//

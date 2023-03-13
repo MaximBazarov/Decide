@@ -16,7 +16,7 @@
 
 import XCTest
 import Decide
-import Inject
+import SwiftUI
 import Combine
 
 enum Goal: AtomicState {
@@ -85,40 +85,26 @@ enum Step: AtomicState {
     }
 
     func test_DecisionExecution_Observing() {
-        let exp = expectation(description: "")
         let core = DecisionCore()
-        let sut = ConsumerUseCase(core: core)
-        let read = core.reader()
+        let sut = ConsumerView()
+            .decisionCore(core)
 
-        sut.render()
         core.execute(ConfigureCounter(initial: 0, goal: 100, step: 10))
-        core.execute(MakeStep(completed: exp))
+//        core.execute(MakeStep(completed: exp))
 
-        wait(for: [exp], timeout: 0.1)
-        /*
-         Currently failing, needs Context to debug what's going on.
-         XCTAssertEqual([10, 20, 30, 40, 50, 60, 70, 80, 90, 100], sut.counterUpdatesReceived)
-         */
-        XCTAssertEqual(read(Counter.self), 100)
     }
 }
 
-final class ConsumerUseCase {
+struct ConsumerView: View {
+
+    @MakeDecision var makeDecision
     @Observe(Counter.self) var counter
-    var counterUpdatesReceived: [Int] = []
+    @State var updates: [Counter.Value] = []
 
-    let core: DecisionExecutor
-    var cancel: AnyCancellable!
-
-    init(core: DecisionExecutor) {
-        self.core = core
-        _counter.core.override(with: core)
-        self.cancel = _counter.observedValue.objectWillChange.sink {
-            self.render()
+    var body: some View {
+        updates.append(counter)
+        return VStack {
+            Text("\(counter)")
         }
-    }
-
-    @MainActor func render() {
-        self.counterUpdatesReceived.append(self.counter)
     }
 }

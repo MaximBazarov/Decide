@@ -20,7 +20,7 @@ import Foundation
 // MARK: - Effect
 //===----------------------------------------------------------------------===//
 
-public protocol Effect {
+public protocol Effect: Sendable {
 
     /// Encloses the asynchronous execution.
     /// Produces the ``Decision`` that describes the state updates with the result.

@@ -23,7 +23,7 @@ import Foundation
 ///
 /// **Parent context**: You can also link the parent context for the operation that require
 /// that information.
-public final class Context {
+public final class Context: Sendable {
     public let parent: Context?
     public let className: String
     public let file: String

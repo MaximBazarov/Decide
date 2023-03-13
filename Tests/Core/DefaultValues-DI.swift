@@ -14,16 +14,3 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Inject
-
-public extension DefaultValues {
-
-    /// Application state and side effects ``DecisionExecutor``
-    var decisionCore: DecisionExecutor {
-        DecisionCore(
-            storage: InMemoryStorage(),
-            dependencies: DependencyGraph(),
-            observation: ObservationSystem()
-        )
-    }
-}

@@ -20,7 +20,7 @@ import Foundation
 //===----------------------------------------------------------------------===//
 
 
-@MainActor public protocol Decision: CustomDebugStringConvertible {
+@MainActor public protocol Decision: CustomDebugStringConvertible, Sendable {
     /// Describes how decision has to be executed.
     /// Applying state changes using read/write.
     /// All heavy or asynchronous work **must** be isolated in produced ``Effect``.
