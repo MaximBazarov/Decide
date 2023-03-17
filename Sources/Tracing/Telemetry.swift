@@ -34,23 +34,32 @@ final class Signposter {
 
 }
 
-protocol Telemetry {
+public protocol Telemetry {
     @MainActor var id: OSSignpostID { get }
     @MainActor var signposter: OSSignposter { get }
     @MainActor var logger: Logger { get }
 }
 
+public enum TelemetryLevel: Hashable {
+    case logs
+    case storage
+    case dependencies
+    case accessors
+    case observation
+    case decisions
+    case effects
+}
 
-@MainActor final class OSLogTracing: Sendable, Telemetry {
-    var id: OSSignpostID
-    var signposter: OSSignposter
-    var logger: Logger
+@MainActor public final class OSLogTracing: Sendable, Telemetry {
+    public var id: OSSignpostID
+    public var signposter: OSSignposter
+    public var logger: Logger
 
     /// Creates a new
     /// - Parameters:
     ///   - subsystem: name of the subsystem used for grouping logs, intervals and signposts under this name
     ///   - category: Category of the subsystem used to group further by category name.
-    init(subsystem: String, category: String) {
+    public init(subsystem: String, category: String) {
         self.signposter = OSSignposter(subsystem: "\(subsystem).signpost", category: category)
         self.id = signposter.makeSignpostID()
         self.logger = Logger(subsystem: "\(subsystem).log", category: "Core")
@@ -72,5 +81,19 @@ extension EnvironmentValues {
     var decideTelemetry: Telemetry? {
         get { self[TelemetryEnvironmentKey.self] }
         set { self[TelemetryEnvironmentKey.self] = newValue }
+    }
+}
+
+struct TelemetryChannelsEnvironmentKey: EnvironmentKey {
+    @MainActor
+    static var defaultValue: Set<TelemetryLevel> = []
+}
+
+extension EnvironmentValues {
+
+    /// Set of the log levels that should be traced.
+    var decideTelemetryLevels: Set<TelemetryLevel> {
+        get { self[TelemetryChannelsEnvironmentKey.self] }
+        set { self[TelemetryChannelsEnvironmentKey.self] = newValue }
     }
 }

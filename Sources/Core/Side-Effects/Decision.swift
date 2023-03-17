@@ -15,10 +15,6 @@
 //
 
 import Foundation
-//===----------------------------------------------------------------------===//
-// MARK: - Decision
-//===----------------------------------------------------------------------===//
-
 
 @MainActor public protocol Decision: CustomDebugStringConvertible, Sendable {
     /// Describes how decision has to be executed.

@@ -16,6 +16,7 @@
 
 import Foundation
 import OSLog
+import SwiftUI
 
 //===----------------------------------------------------------------------===//
 // MARK: - Storage System
@@ -54,29 +55,32 @@ public typealias ValueProvider<T> = @MainActor () -> T
 //===----------------------------------------------------------------------===//
 
 @MainActor final class InMemoryStorage: StorageSystem {
+
+    var telemetry: Telemetry?
+    var telemetryLevels: Set<TelemetryLevel> = []
+
     public func getValue<T>(for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) throws -> T {
-        let post = Signposter()
-        let end = post.readStart(key: key, owner: ownerKey)
-        defer { end() }
+        let end = telemetry?.readStart(key: key, owner: ownerKey)
+        defer { end?() }
         guard values.keys.contains(key) else { throw NoValueInStorage(key) }
         guard let value = values[key] as? T else { throw ValueTypeMismatch(key) }
-        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) returns: \(String(describing: value)) for key: \(key.debugDescription) owner: \(ownerKey.debugDescription, privacy: .private(mask: .hash))")
+        telemetry?.storage(self, reads: value, from: key, ownerKey: ownerKey)
         return value
     }
 
+
+
     public func setValue<V>(_ value: V, for key: StorageKey, onBehalf ownerKey: StorageKey?, context: Context) {
-        let post = Signposter()
-        let end = post.writeStart(key: key, owner: ownerKey, context: context)
-        defer { end() }
-        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) set value: \(String(describing: value)) into key: \(key.debugDescription) \n\(context.debugDescription)")        
+        let end = telemetry?.writeStart(key: key, owner: ownerKey, context: context)
+        defer { end?() }
+        telemetry?.storage(self, writes: value, into: key, ownerKey: ownerKey)
         values[key] = value
     }
 
     @MainActor func invalidate(keys: Set<StorageKey>, changed: StorageKey) {
-        let post = Signposter()
-        let end = post.invalidateDependenciesStart(keys: keys, key: changed)
-        defer { end() }
-        post.logger.trace("[Storage] \(ObjectIdentifier(self).debugDescription) invalidates: \(keys.debugDescription, privacy: .private(mask: .hash))")
+        let end = telemetry?.invalidateDependenciesStart(keys: keys, key: changed)
+        defer { end?() }
+        telemetry?.storage(self, invalidates: keys)
         keys.forEach { key in
             values.removeValue(forKey: key)
         }
@@ -109,39 +113,78 @@ public final class ValueTypeMismatch: Error {
 //===----------------------------------------------------------------------===//
 // MARK: - Logging
 //===----------------------------------------------------------------------===//
-let storageOperations: StaticString = "Storage"
 
-private extension Signposter {
-    nonisolated func invalidateDependenciesStart(keys: Set<StorageKey>, key: StorageKey) -> () -> Void {
+private extension Telemetry {
+    static var storageOperations: StaticString { "Storage" }
+
+    @MainActor func invalidateDependenciesStart(keys: Set<StorageKey>, key: StorageKey) -> () -> Void {
+        let name = Self.storageOperations
         let state = signposter.beginInterval(
-            dependencyOperations,
+            name,
             id: id,
             "invalidate: \(key.debugDescription, privacy: .private(mask: .hash)), dependencies: \(keys.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(dependencyOperations, state)
+            signposter.endInterval(name, state)
         }
     }
 
-    nonisolated func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+    @MainActor func readStart(key: StorageKey, owner: StorageKey?) -> () -> Void {
+        let name = Self.storageOperations
         let state = signposter.beginInterval(
-            storageOperations,
+            name,
             id: id,
             "read: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(storageOperations, state)
+            signposter.endInterval(name, state)
         }
     }
 
-    nonisolated func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
+    @MainActor func writeStart(key: StorageKey, owner: StorageKey?, context: Context) -> () -> Void {
+        let name = Self.storageOperations
         let state = signposter.beginInterval(
-            storageOperations,
+            name,
             id: id,
             "write: \(key.debugDescription, privacy: .private(mask: .hash)), owner: \(owner?.debugDescription ?? "—", privacy: .private(mask: .hash))\n\(context.debugDescription)"
         )
         return { [signposter] in
-            signposter.endInterval(storageOperations, state)
+            signposter.endInterval(name, state)
         }
+    }
+
+    //===----------------------------------------------------------------------===//
+    // MARK: - Logging
+    //===----------------------------------------------------------------------===//
+
+    @MainActor
+    func storage<S: AnyObject, V>(_ storage: S, reads value: V, from key: StorageKey, ownerKey: StorageKey?) {
+        // logger is a Logger class object
+        logger.trace("""
+        [Storage] \(ObjectIdentifier(storage).debugDescription):
+        \n\t returns: \(String(describing: value))
+        \n\t for key: \(key.debugDescription)
+        \nowner: \(ownerKey?.debugDescription ?? "", privacy: .private(mask: .hash))
+        """)
+    }
+
+    @MainActor
+    func storage<S: AnyObject, V>(_ storage: S, writes value: V, into key: StorageKey, ownerKey: StorageKey?) {
+        // logger is a Logger class object
+        logger.trace("""
+        [Storage] \(ObjectIdentifier(storage).debugDescription):
+        \n\t writes: \(String(describing: value))
+        \n\t into key: \(key.debugDescription)
+        \n owner: \(ownerKey?.debugDescription ?? "", privacy: .private(mask: .hash))
+        """)
+    }
+
+    @MainActor
+    func storage<S: AnyObject>(_ storage: S, invalidates keys: Set<StorageKey>) {
+        // logger is a Logger class object
+        logger.trace("""
+        [Storage] \(ObjectIdentifier(storage).debugDescription):
+        \n\t invalidates keys: \(keys.debugDescription)
+        """)
     }
 }

@@ -32,6 +32,8 @@ extension CollectionState {
 /// A wrapper of the collection states ``Observe`` to provide a get ``subscript(_:)`` for later access to the value.
 @MainActor public final class CollectionStateAccess<ID, Value> {
 
+    var core: DecisionExecutor = DecisionCore()
+
     var get: (ID, Context) -> Value = { _, _ in
         preconditionFailure("CollectionStateAccess: `get` must be set after the initialisation.")
     }
@@ -63,12 +65,26 @@ extension CollectionState {
 }
 
 @MainActor @propertyWrapper public struct BindCollection<State: CollectionState>: DynamicProperty {
+
     @Environment(\.decisionCore) var core
 
     @ObservedObject var observedValue = ObservableValue()
 
     public var wrappedValue: CollectionStateAccess<State.ID, State.Value> {
-        nonmutating get { stateAccess }
+        nonmutating get {
+            stateAccess.get = { id, context in
+                let subscribe = self.core.observationSystem.subscribe
+                let read = self.core.reader()
+                let value = read(State.self, at: id, context: context)
+                subscribe(observedValue, State.key(at: id))
+                return value
+            }
+            stateAccess.set = { newValue, id, context in
+                let write = core.writer()
+                write(newValue, into: State.self, at: id, context: context)
+            }
+            return stateAccess
+        }
     }
 
     public var projectedValue: Binding<CollectionStateAccess<State.ID, State.Value>> {
@@ -79,30 +95,12 @@ extension CollectionState {
     }
 
     let state: State.Type
-    let stateAccess = CollectionStateAccess<State.ID, State.Value>()
+    var stateAccess = CollectionStateAccess<State.ID, State.Value>()
 
     public init(_ state: State.Type) {
         self.state = state
-
         let observedValue = ObservableValue()
-        let read = core.reader()
-        let write = core.writer()
-        let subscribe = core.observationSystem.subscribe
-
-        stateAccess.get =  { id, context in
-            let value = read(State.self, at: id, context: context)
-            subscribe(observedValue, State.key(at: id))
-            return value
-        }
-        stateAccess.set = { newValue, id, context in
-            write(newValue, into: State.self, at: id, context: context)
-        }
-
         self.observedValue = observedValue
-    }
-
-    nonisolated public func update() {
-        print("SwiftUI: dynamic property update for  \(state)")
     }
 }
 
