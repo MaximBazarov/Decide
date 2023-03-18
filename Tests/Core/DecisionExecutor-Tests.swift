@@ -89,7 +89,7 @@ enum Step: AtomicState {
         let sut = ConsumerView()
             .decisionCore(core)
 
-        core.execute(ConfigureCounter(initial: 0, goal: 100, step: 10))
+        core.execute(ConfigureCounter(initial: 0, goal: 100, step: 10), context: .here())
 //        core.execute(MakeStep(completed: exp))
 
     }

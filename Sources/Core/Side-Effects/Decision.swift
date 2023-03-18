@@ -28,15 +28,10 @@ import Foundation
     func execute(read: StorageReader, write: StorageWriter) -> Effect
 }
 
-extension Decision {
 
-    nonisolated public var debugDescription: String {
-        return String(reflecting: Self.self)
-            .split(separator: ".")
-            .map{ String($0) }
-            .last ?? "<UNTITLED>"
-    }
-}
+//===----------------------------------------------------------------------===//
+// MARK: - as Effect
+//===----------------------------------------------------------------------===//
 
 public struct DecisionEffect: Effect {
     let decision: Decision
@@ -49,5 +44,19 @@ public struct DecisionEffect: Effect {
 public extension Decision {
     var asEffect: Effect {
         DecisionEffect(decision: self)
+    }
+}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Debug
+//===----------------------------------------------------------------------===//
+
+extension Decision {
+    nonisolated public var debugDescription: String {
+        return String(reflecting: Self.self)
+            .split(separator: ".")
+            .map{ String($0) }
+            .last ?? "<UNTITLED>"
     }
 }

@@ -79,7 +79,7 @@ public extension StorageReader {
             column: column,
             function: function
         )
-        self.init(key: T.key, getValue: { reader in
+        self.init(key: T.key, context: context, getValue: { reader in
             reader.callAsFunction(type, context: context)
         })
     }
@@ -109,6 +109,7 @@ public extension StorageReader {
         )
         self.init(
             key: state.key,
+            context: context,
             getValue: { read in read(state, context: context) },
             setValue: { write, value in write(value, into: state, context: context) }
         )

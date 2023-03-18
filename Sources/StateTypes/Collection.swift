@@ -74,13 +74,13 @@ extension CollectionState {
         nonmutating get {
             stateAccess.get = { id, context in
                 let subscribe = self.core.observationSystem.subscribe
-                let read = self.core.reader()
+                let read = self.core.reader(context: context)
                 let value = read(State.self, at: id, context: context)
                 subscribe(observedValue, State.key(at: id))
                 return value
             }
             stateAccess.set = { newValue, id, context in
-                let write = core.writer()
+                let write = core.writer(context: context)
                 write(newValue, into: State.self, at: id, context: context)
             }
             return stateAccess

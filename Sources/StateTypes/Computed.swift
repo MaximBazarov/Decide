@@ -80,7 +80,7 @@ public extension StorageReader {
             column: column,
             function: function
         )
-        self.init(key: T.key, getValue: { reader in
+        self.init(key: T.key, context: context, getValue: { reader in
             reader(type, context: context)
         })
     }
