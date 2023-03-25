@@ -2,6 +2,23 @@
 
 Decide is a robust and adaptable library that streamlines the process of modeling application states, managing controlled mutations through well-defined Decisions, and handling side-effects using Effects executed on a shared task pool.
 
+Decide's state management library offers numerous benefits for your businesses, side projects, or experiments, making it an ideal choice for various types of projects, whether scaling from a proof of concept (POC) to production or evolving from a side project to a full-blown operating business:
+
+**Scalability:** Decide's modular structure enables applications to scale effectively as they grow, ensuring seamless adaptability from POC to production or from a side project to a fully operational business.
+
+**Faster Development:** The modular and composable approach to state management simplifies the development process, allowing developers to build and iterate more quickly, whether working on a business application or a side project.
+
+**Easier Maintenance:** Granular state management at the property level results in a cleaner and more organized codebase, making it easier to maintain and update over time, regardless of the project size or complexity.
+
+**Enhanced Testability:** The focused and granular nature of state properties allows for more precise unit testing, contributing to better overall test coverage and code quality in both business applications and side projects.
+
+**Reduced Risk:** By providing a single, controlled mechanism for state mutations through Decisions, Decide minimizes the risk of unexpected behavior, ensuring a more reliable application state for all types of projects.
+
+**Increased Collaboration:** The library's accessible and organized approach to state management encourages better collaboration among team members, simplifying understanding and working with the application state, whether in a business context or a side project.
+
+**Cost Savings:** By promoting faster development, easier maintenance, and improved scalability, Decide can contribute to overall cost savings for businesses and side projects in the long run, as it helps optimize resource utilization and reduce development time.
+
+In summary, Decide's state management library provides a versatile solution that can accommodate a wide range of projects, from POCs and side projects to full-scale business applications, ensuring scalability, maintainability, and reliability throughout the development lifecycle.
 
 # Features
 
