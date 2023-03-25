@@ -31,7 +31,7 @@ In Decide, atomic states are used to define individual state properties. This si
 **FeatureOneState.swift**
 ```swift
 struct Name: AtomicState {
-    func defaultValue() -> String { "Untitled" }
+    static func defaultValue() -> String { "Untitled" }
 }
 
 struct Messages: CollectionState {
@@ -104,8 +104,9 @@ struct AddMessage: Decision {
         write(message.content, into: Messages.self, at: message.id)
         write(message.id, into: MessagesIndex.self, .append)
         write(.loadingAttachments, into: MessageStatus.self)
-    }
-    return DownloadMessageAttachment(message)
+
+        return DownloadMessageAttachment(message)
+    }    
 }
 ```
 
