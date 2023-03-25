@@ -24,7 +24,7 @@ public protocol ComputedState {
     associatedtype Value
 
     /// Default value for the state, used if read before write.
-    static func compute(read: StorageReader) -> Value
+    @MainActor static func compute(read: StorageReader) -> Value
 }
 
 //===----------------------------------------------------------------------===//

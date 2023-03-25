@@ -32,8 +32,6 @@ extension CollectionState {
 /// A wrapper of the collection states ``Observe`` to provide a get ``subscript(_:)`` for later access to the value.
 @MainActor public final class CollectionStateAccess<ID, Value> {
 
-    var core: DecisionExecutor = DecisionCore()
-
     var get: (ID, Context) -> Value = { _, _ in
         preconditionFailure("CollectionStateAccess: `get` must be set after the initialisation.")
     }
