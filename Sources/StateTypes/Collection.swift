@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import Combine
-import Inject
 
 /// State that represents a collection of values of the same type, accessed by id.
 public protocol CollectionState {
@@ -31,23 +30,23 @@ extension CollectionState {
 
 
 /// A wrapper of the collection states ``Observe`` to provide a get ``subscript(_:)`` for later access to the value.
-@MainActor public final class CollectionStateAccess<State: CollectionState> {
+@MainActor public final class CollectionStateAccess<ID, Value> {
 
-    var get: (State.ID, Context) -> State.Value = { _, _ in
+    var get: (ID, Context) -> Value = { _, _ in
         preconditionFailure("CollectionStateAccess: `get` must be set after the initialisation.")
     }
-    var set: (State.Value, State.ID, Context) -> Void = { _, _, _ in
+    var set: (Value, ID, Context) -> Void = { _, _, _ in
         preconditionFailure("CollectionStateAccess: `set` must be set after the initialisation.")
     }
 
     public subscript(
-        _ id: State.ID,
+        _ id: ID,
         file: String = #file,
         fileID: String = #fileID,
         line: Int = #line,
         column: Int = #column,
         function: String = #function
-    ) -> Binding<State.Value> {
+    ) -> Binding<Value> {
         let context: Context = Context(
             className: function,
             file: file,
@@ -56,7 +55,7 @@ extension CollectionState {
             column: column,
             function: function
         )
-        return Binding<State.Value>(
+        return Binding<Value>(
             get: { self.get(id, context) },
             set: { value in self.set(value, id, context) }
         )
@@ -64,15 +63,29 @@ extension CollectionState {
 }
 
 @MainActor @propertyWrapper public struct BindCollection<State: CollectionState>: DynamicProperty {
-    @Injected(\.decisionCore, lifespan: .permanent, scope: .shared) var core
+
+    @Environment(\.decisionCore) var core
 
     @ObservedObject var observedValue = ObservableValue()
 
-    public var wrappedValue: CollectionStateAccess<State> {
-        nonmutating get { stateAccess }
+    public var wrappedValue: CollectionStateAccess<State.ID, State.Value> {
+        nonmutating get {
+            stateAccess.get = { id, context in
+                let subscribe = self.core.observationSystem.subscribe
+                let read = self.core.reader(context: context)
+                let value = read(State.self, at: id, context: context)
+                subscribe(observedValue, State.key(at: id))
+                return value
+            }
+            stateAccess.set = { newValue, id, context in
+                let write = core.writer(context: context)
+                write(newValue, into: State.self, at: id, context: context)
+            }
+            return stateAccess
+        }
     }
 
-    public var projectedValue: Binding<CollectionStateAccess<State>> {
+    public var projectedValue: Binding<CollectionStateAccess<State.ID, State.Value>> {
         Binding(
             get: { wrappedValue },
             set: { _ in }
@@ -80,30 +93,12 @@ extension CollectionState {
     }
 
     let state: State.Type
-    let stateAccess = CollectionStateAccess<State>()
+    var stateAccess = CollectionStateAccess<State.ID, State.Value>()
 
     public init(_ state: State.Type) {
         self.state = state
-
         let observedValue = ObservableValue()
-        let read = core.instance.reader()
-        let write = core.instance.writer()
-        let subscribe = core.instance.observationSystem.subscribe
-
-        stateAccess.get =  { id, context in
-            let value = read(State.self, at: id, context: context)
-            subscribe(observedValue, State.key(at: id))
-            return value
-        }
-        stateAccess.set = { newValue, id, context in
-            write(newValue, into: State.self, at: id, context: context)
-        }
-
         self.observedValue = observedValue
-    }
-
-    nonisolated public func update() {
-        print("SwiftUI: dynamic property update for  \(state)")
     }
 }
 

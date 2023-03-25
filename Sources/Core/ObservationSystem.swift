@@ -15,7 +15,6 @@
 //
 
 import Combine
-import Inject
 
 /// Keyed with ``StorageKey`` set weak references to `ObservableObjectPublisher`
 @MainActor public final class ObservationSystem {

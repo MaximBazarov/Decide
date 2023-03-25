@@ -27,17 +27,16 @@ let package = Package(
         .library(name: "Decide", targets: ["Decide"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/MaximBazarov/Inject.git", from: "1.0.0")
     ],
     targets: [
         .target(
             name: "Decide",
-            dependencies: ["Inject"],
+            dependencies: [],
             path: "Sources"
         ),
         .testTarget(
             name: "Decide-Tests",
-            dependencies: ["Decide", "Inject"],
+            dependencies: ["Decide"],
             path: "Tests"
         )
     ]

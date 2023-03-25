@@ -15,7 +15,7 @@
 //
 
 import Foundation
-
+import SwiftUI
 
 //===----------------------------------------------------------------------===//
 // MARK: - Dependency System Protocol
@@ -37,12 +37,12 @@ extension DependencyGraph {
     ///   - dependency: the key on invalidating of which `key` will be invalidated.
     ///   - key: key to be invalidated together with `dependency`
     func add(dependency: StorageKey, thatInvalidates key: StorageKey) {
-        let signposter = Signposter()
-        let end = signposter.addDependenciesStart(key)
+        let end = telemetry?.addDependenciesStart(key)
         defer {
-            signposter.logger.trace("+ \(dependency.debugDescription, privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
-            end()
+            telemetry?.logger.trace("+ \(dependency.debugDescription, privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
+            end?()
         }
+
         guard dependencies.keys.contains(dependency)
         else {
             dependencies[dependency] = Set([key])
@@ -58,9 +58,9 @@ extension DependencyGraph {
     ///   - key: key for which return dependencies
     ///   - result: All the dependencies of the key, recursively.
     func popDependencies(of key: StorageKey) -> Set<StorageKey> {
-        let signposter = Signposter()
-        let end = signposter.popDependenciesStart(key)
-        defer { end() }
+        let end = telemetry?.popDependenciesStart(key)
+        defer { end?() }
+
         var result = Set<StorageKey>([key])
         var queue = Queue()
         pop(for: key, into: &result, queue: &queue)
@@ -68,12 +68,15 @@ extension DependencyGraph {
             dependencies.removeValue(forKey: $0)
         }
         dependencies.removeValue(forKey: key)
-        signposter.logger.trace("pop: \(result.map{ $0.debugDescription }.joined(separator: "\n"), privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
+        telemetry?.logger.trace("pop: \(result.map{ $0.debugDescription }.joined(separator: "\n"), privacy: .private(mask: .hash)) that invalidates \(key.debugDescription)")
         return result
     }
 }
 
 @MainActor final class DependencyGraph: DependencySystem {
+    var telemetry: Telemetry?
+    var telemetryLevels: Set<TelemetryLevel> = []
+
     var dependencies: [StorageKey: Set<StorageKey>] = [:]
 
     private func pop(for key: StorageKey, into result: inout Set<StorageKey>, queue: inout Queue) {
@@ -120,28 +123,32 @@ private extension DependencyGraph {
 // MARK: - Logging
 //===----------------------------------------------------------------------===//
 
-let dependencyOperations: StaticString = "Dependency"
 
-extension Signposter {
-    nonisolated func popDependenciesStart(_ key: StorageKey) -> () -> Void {
+extension Telemetry {
+
+    static var dependencyOperations: StaticString { "Dependency" }
+
+    @MainActor
+    func popDependenciesStart(_ key: StorageKey) -> () -> Void {
         let state = signposter.beginInterval(
-            dependencyOperations,
-            id: id,
+            Self.dependencyOperations,
+            id: self.id,
             "pop: \(key.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(dependencyOperations, state)
+            signposter.endInterval(Self.dependencyOperations, state)
         }
     }
 
-    nonisolated func addDependenciesStart(_ key: StorageKey) -> () -> Void {
+    @MainActor
+    func addDependenciesStart(_ key: StorageKey) -> () -> Void {
         let state = signposter.beginInterval(
-            dependencyOperations,
-            id: id,
+            Self.dependencyOperations,
+            id: self.id,
             "+ Add: \(key.debugDescription, privacy: .private(mask: .hash))"
         )
         return { [signposter] in
-            signposter.endInterval(dependencyOperations, state)
+            signposter.endInterval(Self.dependencyOperations, state)
         }
     }
 }

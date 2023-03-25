@@ -14,8 +14,6 @@
 //===----------------------------------------------------------------------===//
 //
 
-import Inject
-
 //===----------------------------------------------------------------------===//
 // MARK: - Atomic State
 //===----------------------------------------------------------------------===//
@@ -26,7 +24,7 @@ public protocol ComputedState {
     associatedtype Value
 
     /// Default value for the state, used if read before write.
-    static func compute(read: StorageReader) -> Value
+    @MainActor static func compute(read: StorageReader) -> Value
 }
 
 //===----------------------------------------------------------------------===//
@@ -82,7 +80,7 @@ public extension StorageReader {
             column: column,
             function: function
         )
-        self.init(key: T.key, getValue: { reader in
+        self.init(key: T.key, context: context, getValue: { reader in
             reader(type, context: context)
         })
     }
