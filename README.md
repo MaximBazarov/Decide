@@ -69,7 +69,9 @@ struct ContentView: View {
 }
 ```
 
-With Decide, the view is guaranteed to be updated only when any of the values used to render the body change, eliminating the need for manual value comparisons. This ensures optimal performance and seamless state updates, simplifying the process of working with application states.
+With Decide, the view automatically updates whenever the values involved in rendering the body change, removing the need for manual value comparisons and ensuring efficient state updates.
+
+This ensures optimal performance and seamless state updates, simplifying the process of working with application states.
 
 ## Decisions: The Single Mechanism for Controlled State Mutations
 
