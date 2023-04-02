@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package 
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -77,6 +77,8 @@ public final class Context: Sendable {
 
 extension Context: CustomDebugStringConvertible {
     public var debugDescription: String {
-        "\nsymbol: \(className),\nfile: \(file):\(line)\ncolumn\(column),\nfunction: \(function)"
+        """
+        symbol: \(className), file: \(file):\(line):\(column),
+        """
     }
 }

@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package 
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -32,7 +32,7 @@ enum Step: AtomicState {
 }
 
 
-@MainActor final class DecisionExecutorTests: XCTestCase {
+@MainActor final class StorageTests: XCTestCase {
 
     struct ConfigureCounter: Decision {
         let initial: Int
@@ -85,7 +85,7 @@ enum Step: AtomicState {
     }
 
     func test_DecisionExecution_Observing() {
-        let core = DecisionCore()
+        let core = DecisionEffectStorage()
         let sut = ConsumerView()
             .decisionCore(core)
 

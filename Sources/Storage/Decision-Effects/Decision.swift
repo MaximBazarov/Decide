@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package 
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -17,6 +17,7 @@
 import Foundation
 
 @MainActor public protocol Decision: CustomDebugStringConvertible, Sendable {
+
     /// Describes how decision has to be executed.
     /// Applying state changes using read/write.
     /// All heavy or asynchronous work **must** be isolated in produced ``Effect``.
@@ -26,6 +27,7 @@ import Foundation
     ///   - write: Connected to the ``StorageSystem`` and configured ``StorageWriter``.
     /// - Returns: Effect with enclosed heavy/async job.
     func execute(read: StorageReader, write: StorageWriter) -> Effect
+
 }
 
 

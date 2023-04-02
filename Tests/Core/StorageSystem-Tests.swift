@@ -3,7 +3,7 @@
 ////
 //// This source file is part of the Decide package open source project
 ////
-//// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+//// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package 
 //// open source project authors
 //// Licensed under Apache License v2.0
 ////
@@ -100,7 +100,7 @@
 //        let storage = InMemoryStorage()
 //        let dependencies = DependencyGraph()
 //
-//        lazy var core: DecisionExecutor = DecisionCore(storage: storage, dependencies: dependencies)
+//        lazy var core: Storage = DecisionCore(storage: storage, dependencies: dependencies)
 //
 //        init() {
 //            _bind.core.override(with: core)

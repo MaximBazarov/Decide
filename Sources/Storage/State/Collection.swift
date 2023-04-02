@@ -66,7 +66,7 @@ extension CollectionState {
 
     @Environment(\.decisionCore) var core
 
-    @ObservedObject var observedValue = ObservableValue()
+    @ObservedObject var observedValue: ObservableValue
 
     public var wrappedValue: CollectionStateAccess<State.ID, State.Value> {
         nonmutating get {
@@ -97,7 +97,8 @@ extension CollectionState {
 
     public init(_ state: State.Type) {
         self.state = state
-        let observedValue = ObservableValue()
+#warning("TODO: provide better context")
+        let observedValue = ObservableValue(context: .here())
         self.observedValue = observedValue
     }
 }

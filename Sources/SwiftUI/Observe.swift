@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package
+// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -22,13 +22,18 @@ import SwiftUI
 // MARK: - Make Decision Property Wrapper
 //===----------------------------------------------------------------------===//
 
-/// A property wrapper that provides a function to execute a `Decision` in the context of a ``DecisionExecutor``.
+/// A property wrapper that provides a function to execute a `Decision`
+/// in the context of a ``Storage``.
 ///
-/// This property wrapper can be used in a SwiftUI view to access the functionality of the ``DecisionExecutor``.
-/// When an action that requires a decision is triggered in the view, the wrapped function can be called
-/// with the appropriate decision, which is then executed by the ``DecisionExecutor``.
+/// This property wrapper can be used in a SwiftUI view to access the
+/// functionality of the ``Storage``.
+/// When an action that requires a decision is triggered in the view,
+/// the wrapped function can be called
+/// with the appropriate decision,
+/// which is then executed by the ``Storage``.
 ///
-/// The `MakeDecision` property wrapper uses the ``DecisionExecutor`` provided by the environment.
+/// The `MakeDecision` property wrapper uses the ``Storage``
+/// provided by the environment.
 ///
 /// Usage:
 /// ```
@@ -45,7 +50,7 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// However, you can also inject a custom ``DecisionExecutor`` instance during initialization.
+/// However, you can also inject a custom ``Storage`` instance during initialization.
 ///
 /// ```
 /// // Inject the custom decision core into MyView using the environment
@@ -61,17 +66,17 @@ import SwiftUI
 ///   on the main actor, which is required for updating the UI in SwiftUI.
 @MainActor @propertyWrapper public struct MakeDecision: DynamicProperty {
 
-    /// The `DecisionExecutor` instance provided through the environment.
+    /// The `Storage` instance provided through the environment.
     @Environment(\.decisionCore) var environmentCore
     let context: Context
 
-    /// The `DecisionExecutor` instance provided through dependency injection.
-    private var injectedCore: DecisionExecutor?
+    /// The `Storage` instance provided through dependency injection.
+    private var injectedCore: Storage?
 
-    /// Creates a `MakeDecision` property wrapper with an optional `DecisionExecutor` instance to use for dependency injection.
-    /// - Parameter core: The `DecisionExecutor` instance to use for dependency injection.
+    /// Creates a `MakeDecision` property wrapper with an optional `Storage` instance to use for dependency injection.
+    /// - Parameter core: The `Storage` instance to use for dependency injection.
     public init(
-        core: DecisionExecutor? = nil,
+        core: Storage? = nil,
         file: String = #file,
         fileID: String = #fileID,
         line: Int = #line,
@@ -89,7 +94,7 @@ import SwiftUI
         )
     }
 
-    /// The wrapped function that executes the given `Decision` by calling the appropriate `DecisionExecutor` instance.
+    /// The wrapped function that executes the given `Decision` by calling the appropriate `Storage` instance.
 
     public var wrappedValue: @MainActor (Decision) -> Void {
         get {
@@ -109,7 +114,7 @@ import SwiftUI
 /// Provides an observed read-only access to the value of the atomic state type.
 @MainActor @propertyWrapper public struct Observe<Value>: DynamicProperty {
     @ObservedObject public private(set)
-    var observedValue = ObservableValue()
+    var observedValue: ObservableValue
 
     @Environment(\.decisionCore) var core
     private let context: Context
@@ -133,61 +138,10 @@ import SwiftUI
         self.getValue = getValue
         self.key = key
         self.context = context
+        self._observedValue = ObservedObject(initialValue: ObservableValue(context: context))
     }
 }
 
-//===----------------------------------------------------------------------===//
-// MARK: - Bind
-//===----------------------------------------------------------------------===//
-
-/// Provides an observed read/write access to the value of the atomic state type.
-@MainActor @propertyWrapper public struct Bind<Value>: DynamicProperty {
-    @ObservedObject var observedValue = ObservableValue()
-
-    @Environment(\.decisionCore) var core
-    private let context: Context
-
-    public var wrappedValue: Value {
-        get {
-            core.observationSystem.subscribe(observedValue, for: key)
-            return getValue(reader)
-        }
-        nonmutating set {
-            setValue(writer, newValue)
-        }
-    }
-
-    public var projectedValue: Binding<Value> {
-        Binding(
-            get: { wrappedValue },
-            set: { wrappedValue = $0 }
-        )
-    }
-
-    var reader: StorageReader {
-        core.reader(context: context)
-    }
-
-    var writer: StorageWriter {
-        core.writer(context: context)
-    }
-
-    let key: StorageKey
-    init(
-        key: StorageKey,
-        context: Context,
-        getValue: @escaping (StorageReader) -> Value,
-        setValue: @escaping (StorageWriter, Value) -> Void
-    ) {
-        self.getValue = getValue
-        self.setValue = setValue
-        self.key = key
-        self.context = context
-    }
-
-    private let getValue: @MainActor (StorageReader) -> Value
-    private let setValue: @MainActor (StorageWriter, Value) -> Void
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -195,12 +149,15 @@ import SwiftUI
 //===----------------------------------------------------------------------===//
 let propertyWrappersOperations: StaticString = "@ Observe/Bind"
 
-extension Signposter {
+extension Telemetry {
     nonisolated func subscribed(_ key: StorageKey, context: Context) -> () -> Void {
         let state = signposter.beginInterval(
             propertyWrappersOperations,
             id: id,
-            "+  \(key.debugDescription, privacy: .private(mask: .hash)) context: \(context.debugDescription)"
+            """
+            key: \(key.debugDescription, privacy: .private(mask: .hash))
+            context: \(context.debugDescription)
+            """
         )
         return { [signposter] in
             signposter.endInterval(propertyWrappersOperations, state)

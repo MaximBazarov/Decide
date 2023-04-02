@@ -3,7 +3,7 @@
 //
 // This source file is part of the Decide package open source project
 //
-// Copyright (c) 2020-2022 Maxim Bazarov and the Decide package 
+// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package 
 // open source project authors
 // Licensed under Apache License v2.0
 //
@@ -16,35 +16,37 @@
 
 import Combine
 
+
 /// Keyed with ``StorageKey`` set weak references to `ObservableObjectPublisher`
 @MainActor public final class ObservationSystem {
 
-    private let poster = Signposter()
+    var telemetry: Telemetry
+
+    init(telemetry: Telemetry) {
+        self.telemetry = telemetry
+    }
+
     let storage = ObservationStorage()
 
     func subscribe(
         _ publisher: ObservableValue,
         for key: StorageKey
     ) {
-        let endInterval = poster.beginInterval_addObservation(key)
-        poster.logger.debug("Observe \(key.debugDescription)")
+        let endInterval = telemetry.beginInterval_addObservation(key)
         defer { endInterval() }
 
         storage.add(publisher, for: key)
     }
 
     func didChangeValue(for keys: Set<StorageKey>) {
-        let poster = Signposter()
-        let end = poster.popObservationsStart(keys)
-        poster.logger.debug("Value changed for keys: \(keys.description)")
-        defer {
-            end()
-        }
-        let observers = Set(keys.flatMap { storage.pop(observationsOf: $0) })
+        let end = telemetry.popObservationsStart(keys)
+        defer { end() }
 
-        poster.logger.trace("Notified observers of  \(observers.count)")
+        let observers = Set(keys.flatMap {
+            storage.pop(observationsOf: $0)
+        })
         observers.forEach { observer in
-            observer.send()
+            observer.valueWillChange()
         }
     }
 
@@ -54,23 +56,9 @@ import Combine
 }
 
 
-/// ObservableObject for a value in ``StorageSystem``.
-public final class ObservableValue: ObservableObject, Hashable {
-
-    public init() {}
-    public func send() { objectWillChange.send() }
-    public var id: ObjectIdentifier {
-        ObjectIdentifier(self)
-    }
-
-    public static func == (lhs: ObservableValue, rhs: ObservableValue) -> Bool {
-        return lhs.id == rhs.id
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }    
-}
+//===----------------------------------------------------------------------===//
+// MARK: - Storage
+//===----------------------------------------------------------------------===//
 
 final class ObservationStorage {
     var storage: [StorageKey: Set<ObservableValue>] = [:]
@@ -88,11 +76,12 @@ final class ObservationStorage {
     }
 }
 
+
 //===----------------------------------------------------------------------===//
 // MARK: - Logging
 //===----------------------------------------------------------------------===//
 
-extension Signposter {
+extension Telemetry {
 
     nonisolated func popObservationsStart(_ keys: Set<StorageKey>) -> () -> Void {
         let name: StaticString = "Observers"
