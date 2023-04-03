@@ -5,7 +5,7 @@
 
 - [x] Context
 - [x] Telemetry
-- [ ] Storage Key
+- [x] Storage Key
 - [ ] Storage
 - [ ] Reader
 - [ ] Writer
