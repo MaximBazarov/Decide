@@ -25,6 +25,11 @@ final class Telemetry_Tests: XCTestCase {
         }
     }
 
+    func test_Telemetry_Environment_Nil_mustReturn_None() {
+        let level = Telemetry.Level(nil)
+        XCTAssertEqual(level, .none)
+    }
+
     func test_Telemetry_Environment_0_mustReturn_None() {
         let level = Telemetry.Level("0")
         XCTAssertEqual(level, .none)
