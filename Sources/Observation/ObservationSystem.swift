@@ -14,10 +14,94 @@
 
 import Foundation
 
-public struct ObservableValue {}
+//===----------------------------------------------------------------------===//
+// MARK: - Observation System
+//===----------------------------------------------------------------------===//
 
 @MainActor final class ObservationSystem {
     func subscribe(_ observableValue: ObservableValue, to key: StorageKey) {
         preconditionFailure("not implemented")
+    }
+}
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Storage
+//===----------------------------------------------------------------------===//
+
+final class ObservableValueStorage {
+
+    final class WeakRef: Hashable {
+        weak var ref: ObservableValue?
+        init(_ ref: ObservableValue) {
+            self.ref = ref
+        }
+
+        static func == (lhs: ObservableValueStorage.WeakRef, rhs: ObservableValueStorage.WeakRef) -> Bool {
+            lhs.ref == rhs.ref
+        }
+
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(ref)
+        }
+    }
+
+    var storage: [StorageKey: Set<WeakRef>] = [:]
+
+    func add(_ observation: ObservableValue, for key: StorageKey) {
+        var observationsOfKey = storage[key] ?? []
+        observationsOfKey.insert(WeakRef(observation))
+        storage[key] = observationsOfKey
+    }
+
+    func pop(observationsOf key: StorageKey) -> Set<ObservableValue> {
+        let observations = storage[key] ?? []
+        storage.removeValue(forKey: key)
+        return Set(observations.compactMap(\.ref))
+    }
+
+    func pop(observationsOf keys: Set<StorageKey>) -> Set<ObservableValue> {
+        var values = Set<ObservableValue>()
+        for key in keys {
+            values.formUnion(pop(observationsOf: key))
+        }
+
+        return values
+    }
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// MARK: - Observable Value
+//===----------------------------------------------------------------------===//
+public final class ObservableValue: ObservableObject, Hashable {
+
+    /// Observation ``Context``.
+    let context: Context
+
+    public init(context: Context) {
+        self.context = context
+    }
+
+    /// Call this method when value is about to change.
+    public func valueWillChange() {
+        objectWillChange.send()
+    }
+
+    /// `ObjectIdentifier` of self.
+    public var id: ObjectIdentifier {
+        ObjectIdentifier(self)
+    }
+
+
+    // MARK: Hashable
+
+    public static func == (lhs: ObservableValue, rhs: ObservableValue) -> Bool {
+        return lhs.id == rhs.id
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
