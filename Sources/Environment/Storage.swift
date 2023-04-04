@@ -38,19 +38,25 @@ public struct NoValueInStorage: Error {}
     /// Set a new `Value` in storage for a given key.
     func set<Value>(value: Value, for key: StorageKey)
 
-    /// Storage must call this function
-    /// **only when values for keys updated outside of** `set(value:for:)` function.
+    /// Storage must call this function for keys updated.
     @MainActor var onValueUpdate: (Set<StorageKey>) -> Void { get set }
 }
 
 
 @MainActor final class KeyValueStorage: Storage {
+    private var values = [StorageKey: Any]()
+
     func get<Value>(for key: StorageKey) throws -> Value {
-        fatalError()
+        guard let value = values[key] as? Value
+        else { throw NoValueInStorage() }
+        return value
     }
 
     func set<Value>(value: Value, for key: StorageKey) {
-        fatalError()
+        values[key] = value
+        var updatedKeys = Set<StorageKey>()
+        updatedKeys.insert(key)
+        onValueUpdate(updatedKeys)
     }
 
     var onValueUpdate: (Set<StorageKey>) -> Void = { _ in }
