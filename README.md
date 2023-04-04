@@ -7,10 +7,11 @@
 - [x] Telemetry
 - [x] Storage Key
 - [ ] Storage
-- [ ] Reader
-- [ ] Writer
-- [ ] Decision & Effect
-- [ ] NoOperation
+    - [ ] Reader
+    - [ ] Writer
+    - [ ] Decision 
+    - [ ] Effect
+    - [ ] NoOperation
 - [ ] Observation
 - [ ] Atomic State Type
 - [ ] Observe

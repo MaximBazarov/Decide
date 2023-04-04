@@ -15,16 +15,19 @@
 import Foundation
 
 
-/// StorageKey is a unique identifier used to distinguish stored values within a storage system.
-/// It is designed to enable efficient value retrieval and organization by combining a type and optionally additional keys and a URI.
+/// A compound and unique identifier used to distinguish stored values within ``Storage``.
+/// Enables a flexible value identification by combining a type and optionally additional keys and a URI.
 /// > Note: The uniqueness of the keys is guaranteed **only within the storage system**;
-/// Provide a URI is to guarantee, uniqueness across different systems such as file systems or Core Data.
+/// Provide a URI to guarantee uniqueness across different systems such as file system or Core Data.
 public final class StorageKey: Hashable, CustomDebugStringConvertible {
 
     // value identity
     private let localKey: AnyHashable
     private let additionalKeys: [AnyHashable]
-    private let uri: String?
+
+
+    /// Unique Resource Identifier - identifies a value across different environments such as file system, core data, iCloud etc.
+    public let uri: String?
 
     // used for debugging only
     private let _typeName: String

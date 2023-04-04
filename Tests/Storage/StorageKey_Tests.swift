@@ -17,9 +17,13 @@ import XCTest
 
 final class StorageKey_Tests: XCTestCase {
 
+
+    typealias TypealiasInt = Int
+
     func testUniqueness() {
         let key1 = StorageKey(type: Int.self)
-        let key2 = StorageKey(type: Int.self)
+        // when using type alias still refers to the original type
+        let key2 = StorageKey(type: TypealiasInt.self)
         let key3 = StorageKey(type: String.self)
         let key4 = StorageKey(type: Int.self, additionalKeys: [1])
         let key5 = StorageKey(type: Int.self, additionalKeys: [1])
