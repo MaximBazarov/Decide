@@ -18,9 +18,17 @@ import Foundation
 // MARK: - Observation System
 //===----------------------------------------------------------------------===//
 
+
+/// One-time pass Observation System
 @MainActor final class ObservationSystem {
+    let storage = ObservableValueStorage()
+
     func subscribe(_ observableValue: ObservableValue, to key: StorageKey) {
-        preconditionFailure("not implemented")
+        storage.add(observableValue, for: key)
+    }
+
+    func pop(observationsOf key: StorageKey) -> Set<ObservableValue> {
+        storage.pop(observationsOf: key)
     }
 }
 

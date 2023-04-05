@@ -12,132 +12,113 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
 import XCTest
 @testable import Decide
 
 @MainActor
 final class ObservationSystemTests: XCTestCase {
-
-    func testPop_ObservationsOfKey() {
-        let storage = ObservableValueStorage()
-        let key = StorageKey(uri: "test-key")
+    func testSubscribe() {
+        let observationSystem = ObservationSystem()
+        let key = StorageKey(uri: "testKey")
         let observableValue = ObservableValue(context: .here())
 
-        storage.add(observableValue, for: key)
+        observationSystem.subscribe(observableValue, to: key)
 
-        let poppedObservations = storage.pop(observationsOf: key)
-
+        let observations = observationSystem.storage.storage[key]
+        XCTAssertNotNil(observations)
         XCTAssertTrue(
-            poppedObservations.count == 1,
-            "There should be one observation popped for the given key"
-        )
+            observations?.count == 1,
+            "There should be one observation for the key.")
         XCTAssertTrue(
-            storage.storage[key]?.isEmpty ?? true,
-            "The storage should be empty for the given key after popping"
-        )
+            observations?.first?.ref === observableValue,
+            "The observation should be equal to the observableValue.")
     }
 
-    func testPop_ObservationsOfMultipleKeys() {
-        let storage = ObservableValueStorage()
-        let key1 = StorageKey(uri: "test-key-1")
-        let key2 = StorageKey(uri: "test-key-2")
+    func testPopSingleKey() {
+        let observationSystem = ObservationSystem()
+        let key = StorageKey(uri: "testKey")
         let observableValue1 = ObservableValue(context: .here())
         let observableValue2 = ObservableValue(context: .here())
 
-        storage.add(observableValue1, for: key1)
-        storage.add(observableValue2, for: key2)
+        observationSystem.subscribe(observableValue1, to: key)
+        observationSystem.subscribe(observableValue2, to: key)
 
-        let poppedObservations = storage.pop(observationsOf: Set([key1, key2]))
+        let poppedObservations = observationSystem.pop(observationsOf: key)
 
         XCTAssertTrue(
             poppedObservations.count == 2,
-            "There should be two observations popped for the given keys"
-        )
+            "There should be two observations for the key.")
         XCTAssertTrue(
-            storage.storage[key1]?.isEmpty ?? true,
-            "The storage should be empty for key1 after popping"
-        )
+            poppedObservations.contains(observableValue1),
+            "The poppedObservations should contain observableValue1.")
         XCTAssertTrue(
-            storage.storage[key2]?.isEmpty ?? true,
-            "The storage should be empty for key2 after popping"
-        )
+            poppedObservations.contains(observableValue2),
+            "The poppedObservations should contain observableValue2.")
+
+        let remainingObservations = observationSystem.storage.storage[key]
+        XCTAssertNil(remainingObservations)
     }
 
-    func testPop_NoObservationsForKey() {
-        let storage = ObservableValueStorage()
-        let key = StorageKey(uri: "test-key")
+    func testPopMultipleKeys() {
+        let observationSystem = ObservationSystem()
+        let key1 = StorageKey(uri: "testKey1")
+        let key2 = StorageKey(uri: "testKey2")
+        let observableValue1 = ObservableValue(context: .here())
+        let observableValue2 = ObservableValue(context: .here())
 
-        let poppedObservations = storage.pop(observationsOf: key)
+        observationSystem.subscribe(observableValue1, to: key1)
+        observationSystem.subscribe(observableValue2, to: key2)
+
+        let poppedObservations = observationSystem.storage.pop(observationsOf: Set([key1, key2]))
+
+        XCTAssertTrue(
+            poppedObservations.count == 2,
+            "There should be two observations for the multiple keys.")
+        XCTAssertTrue(
+            poppedObservations.contains(observableValue1),
+            "The poppedObservations should contain observableValue1.")
+        XCTAssertTrue(
+            poppedObservations.contains(observableValue2),
+            "The poppedObservations should contain observableValue2.")
+
+        let remainingObservationsForKey1 = observationSystem.storage.storage[key1]
+        let remainingObservationsForKey2 = observationSystem.storage.storage[key2]
+
+        XCTAssertNil(remainingObservationsForKey1)
+        XCTAssertNil(remainingObservationsForKey2)
+    }
+
+    func testSinglePassObservation() {
+        let observationSystem = ObservationSystem()
+        let key = StorageKey(uri: "testKey")
+        let observableValue = ObservableValue(context: .here())
+
+        observationSystem.subscribe(observableValue, to: key)
+        _ = observationSystem.pop(observationsOf: key)
+        let poppedObservations = observationSystem.pop(observationsOf: key)
 
         XCTAssertTrue(
             poppedObservations.isEmpty,
-            "There should be no observations for a key that hasn't been added"
+            "Single pass observation should be removed after the first notification."
         )
     }
 
-    func testWeakRef_Initialization() {
+    func testWillChangeValue() {
+        let observationSystem = ObservationSystem()
+        let key = StorageKey(uri: "testKey")
         let observableValue = ObservableValue(context: .here())
-        let weakRef = ObservableValueStorage.WeakRef(observableValue)
 
-        XCTAssertNotNil(
-            weakRef,
-            "WeakRef should be initialized"
-        )
-        XCTAssertTrue(
-            weakRef.ref === observableValue,
-            "WeakRef should store the correct ObservableValue reference"
-        )
-    }
+        var valueChanged = false
+        let unsubscribe = observableValue.objectWillChange.sink { _ in
+            valueChanged = true
+        }
 
-    func testWeakRef_Deallocation() {
-        // Create an optional ObservableValue
-        var observableValue: ObservableValue? = ObservableValue(context: .here())
-        let weakRef = ObservableValueStorage.WeakRef(observableValue!)
-
-        // Verify that the ref property is not nil
-        XCTAssertNotNil(
-            weakRef.ref,
-            "WeakRef should have a non-nil ref property"
-        )
-
-        // Deallocate observableValue
-        observableValue = nil
-
-        // Verify that the ref property is now nil
-        XCTAssertNil(
-            weakRef.ref,
-            "WeakRef should have a nil ref property after observableValue is deallocated"
-        )
-    }
-
-    func testWeakRef_Equatable() {
-        let observableValue1 = ObservableValue(context: .here())
-        let observableValue2 = ObservableValue(context: .here())
-
-        let weakRef1 = ObservableValueStorage.WeakRef(observableValue1)
-        let weakRef2 = ObservableValueStorage.WeakRef(observableValue1)
-        let weakRef3 = ObservableValueStorage.WeakRef(observableValue2)
+        observationSystem.subscribe(observableValue, to: key)
+        observableValue.valueWillChange()
 
         XCTAssertTrue(
-            weakRef1 == weakRef2,
-            "Two WeakRefs with the same ref property should be equal"
-        )
-        XCTAssertTrue(
-            weakRef1 != weakRef3,
-            "Two WeakRefs with different ref properties should not be equal"
-        )
-    }
-
-    func testWeakRef_Hashable() {
-        let observableValue1 = ObservableValue(context: .here())
-        let observableValue2 = ObservableValue(context: .here())
-
-        let weakRef1 = ObservableValueStorage.WeakRef(observableValue1)
-        let weakRef2 = ObservableValueStorage.WeakRef(observableValue1)
-        let weakRef3 = ObservableValueStorage.WeakRef(observableValue2)
-
-        XCTAssertEqual(weakRef1.hashValue, weakRef2.hashValue, "Two WeakRefs with the same ref property should have the same hash value")
-        XCTAssertNotEqual(weakRef1.hashValue, weakRef3.hashValue, "Two WeakRefs with different ref properties should not have the same hash value")
+            valueChanged,
+            "willChangeValue should trigger the observation.")
+        unsubscribe.cancel()
     }
 }
