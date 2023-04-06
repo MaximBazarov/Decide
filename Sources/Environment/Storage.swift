@@ -75,6 +75,10 @@ public struct NoValueInStorage: Error {}
         self.storage = storage
         self.context = context
     }
+
+    func read<Value>(_ key: StorageKey) throws -> Value {
+        try storage.get(for: key)
+    }
 }
 
 
@@ -89,6 +93,10 @@ public struct NoValueInStorage: Error {}
     init(storage: Storage, context: Context) {
         self.storage = storage
         self.context = context
+    }
+
+    func write<Value>(_ value: Value, at key: StorageKey) {
+        storage.set(value: value, for: key)
     }
 }
 

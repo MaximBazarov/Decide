@@ -8,11 +8,11 @@
 - [x] Storage Key
 - [x] Observation
 - [x] Storage
-    - [ ] Reader - `CallAsFunction<Value>(key) -> Value` + tests
-    - [ ] Writer - `CallAsFunction<Value>(key) -> Value` + tests
+    - [x] Reader - `CallAsFunction<Value>(key) -> Value` + tests
+    - [x] Writer - `CallAsFunction<Value>(key) -> Value` + tests
     - [x] Decision 
     - [x] Effect
-    - [ ] NoOperation
+    - [x] NoOperation
     - [ ] Tracing
 - [ ] Environment
     - Decision Execution
