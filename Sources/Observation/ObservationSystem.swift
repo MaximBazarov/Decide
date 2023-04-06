@@ -79,13 +79,18 @@ final class ObservableValueStorage {
 }
 
 
-
 //===----------------------------------------------------------------------===//
 // MARK: - Observable Value
 //===----------------------------------------------------------------------===//
+
+
+/// A  `Hashable` `ObservableObject` implementation.
+/// Required to add the observations into the storage.
+///
+/// You don't have to use this class directly,
+/// unless you are implementing a custom state type.
 public final class ObservableValue: ObservableObject, Hashable {
 
-    /// Observation ``Context``.
     let context: Context
 
     public init(context: Context) {
@@ -101,7 +106,6 @@ public final class ObservableValue: ObservableObject, Hashable {
     public var id: ObjectIdentifier {
         ObjectIdentifier(self)
     }
-
 
     // MARK: Hashable
 

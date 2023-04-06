@@ -6,16 +6,33 @@
 - [x] Context
 - [x] Telemetry
 - [x] Storage Key
-- [ ] Storage
-    - [ ] Reader
-    - [ ] Writer
-    - [ ] Decision 
-    - [ ] Effect
+- [x] Observation
+- [x] Storage
+    - [ ] Reader - `CallAsFunction<Value>(key) -> Value` + tests
+    - [ ] Writer - `CallAsFunction<Value>(key) -> Value` + tests
+    - [x] Decision 
+    - [x] Effect
     - [ ] NoOperation
-- [ ] Observation
+    - [ ] Tracing
+- [ ] Environment
+    - Decision Execution
+    - Effect Execution
+    - NoOp termination
+    - Tracing
+    - Performance testing
+    - ??? Loop detection
 - [ ] Atomic State Type
 - [ ] Observe
 - [ ] 
+
+# Version 2
+- [ ] Learn more about SPM package plugins, to enable tooling that can be run on build phase.
+    - [ ] Computation loop detection:
+        - A -> B -> C -> A dependency loop
+    - [ ] Effect decision loop detection (e.g. never terminates)
+        - Static analysis on whad decisions and effect.s each return, and whether it's possible to exit. e.g. A -> EA,  B -> EB, EA -> B, EB -> A, we need to check if A, B, EA, EB, either of them has a NoOp as a possible return value based on the static analysis 
+
+/
 
 # Two Caveats
 1. URI based keys: It's easy to create two states that have different Value type, but still the same URI.

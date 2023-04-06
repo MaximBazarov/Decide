@@ -18,9 +18,25 @@ import Foundation
 /// Encloses the asynchronous execution of side-effect.
 public protocol Effect {
 
-    /// Called by ``Environment`` with the provided ``StorageReader``.
+    /// Called by ``Environment`` on a shared thread pool.
     /// Produces the ``Decision`` that describes the necessary state updates.
     ///
     /// - Returns: A ``Decision`` that describes the required state updates.
-    func perform(read: StorageReader) async -> Decision
+    func perform() async -> Decision
+}
+
+public extension Effect {
+
+    /// Returns a ``Decision`` that returns the ``Effect`` immediately.
+    var asDecision: Decision {
+        EffectDecision(effect: self)
+    }
+}
+
+struct EffectDecision: Decision {
+    let effect: Effect
+
+    public func execute(read: StorageReader, write: StorageWriter) -> Effect {
+        effect
+    }
 }

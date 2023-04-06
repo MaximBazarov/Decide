@@ -69,12 +69,12 @@ import Foundation
     public func subscribe(_ observableValue: ObservableValue, to key: StorageKey) {
     }
 
-    /// Returns a ``StorageWriter`` instance configured with the `Environment`.
+    /// Returns a ``StorageWriter`` instance configured with the `Storage`.
     public func writer(context: Context) -> StorageWriter {
         StorageWriter(storage: storage, context: context)
     }
 
-    /// Returns a ``StorageReader`` instance configured with the `Environment`.
+    /// Returns a ``StorageReader`` instance configured with the `Storage`.
     public func reader(context: Context) -> StorageReader {
         StorageReader(storage: storage, context: context)
     }
@@ -82,7 +82,7 @@ import Foundation
     /// Performs the effect and then executes the decision
     nonisolated private func perform(_ effect: Effect, context: Context) {
         Task.detached {
-            let decision = await effect.perform(read: self.reader(context: context))
+            let decision = await effect.perform()
             await self.execute(decision, context: context)
         }
     }
