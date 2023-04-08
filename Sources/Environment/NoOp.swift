@@ -36,14 +36,16 @@ public let noEffect: Effect = NoOp.shared
     static let shared = NoOp()
 }
 
+let noopObjectIdentifier = ObjectIdentifier(NoOp.shared)
+
 extension Decision {
-    var isNoOp: Bool {
-        ObjectIdentifier(self as AnyObject) == ObjectIdentifier(NoOp.shared)
+    nonisolated var isNoOp: Bool {
+        ObjectIdentifier(self as AnyObject) == noopObjectIdentifier
     }
 }
 
 extension Effect {
-    var isNoOp: Bool {
-        ObjectIdentifier(self as AnyObject) == ObjectIdentifier(NoOp.shared)
+    nonisolated var isNoOp: Bool {
+        ObjectIdentifier(self as AnyObject) == noopObjectIdentifier
     }
 }
