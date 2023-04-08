@@ -17,7 +17,7 @@
     - Decision Execution
     - Effect Execution
     - NoOp termination    
-- [ ] Atomic State Type
+- [x] Atomic State Type
 - [ ] Observe
 - [ ] Integration Testing for Atomic using views and Observe
     - [ ] Performance testing (?)
