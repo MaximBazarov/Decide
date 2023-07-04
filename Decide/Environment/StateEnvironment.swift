@@ -15,11 +15,14 @@
 import Foundation
 
 @MainActor public final class StateEnvironment {
-    typealias StateKey = ObjectIdentifier
+    enum Key: Hashable {
+        case atomic(ObjectIdentifier)
+        case keyed(ObjectIdentifier, AnyHashable)
+    }
 
     static let `default` = StateEnvironment()
 
-    var storage: [StateKey: Any] = [:]
+    var storage: [Key: Any] = [:]
 
     subscript<S: AtomicState>(_ stateType: S.Type) -> S {
         let stateKey = StateKey(stateType)
@@ -35,4 +38,3 @@ import Foundation
 
     public init() {}
 }
-
