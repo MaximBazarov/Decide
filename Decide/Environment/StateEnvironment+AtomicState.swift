@@ -14,15 +14,16 @@
 
 import Foundation
 
-@MainActor public final class StateEnvironment {
-    enum Key: Hashable {
-        case atomic(ObjectIdentifier)
-        case keyed(ObjectIdentifier, AnyHashable)
+extension StateEnvironment {
+    subscript<S: AtomicState>(_ stateType: S.Type) -> S {
+        let key = Key.atomic(ObjectIdentifier(stateType))
+        if let state = storage[key] as? S { return state }
+        let newValue = S.init()
+        storage[key] = newValue
+        return newValue
     }
 
-    static let `default` = StateEnvironment()
-
-    var storage: [Key: Any] = [:]
-
-    public init() {}
+    func getProperty<S: AtomicState, Value>(_ propertyKeyPath: KeyPath<S, Property<Value>>) -> Property<Value> {
+        self[S.self][keyPath: propertyKeyPath]
+    }
 }
