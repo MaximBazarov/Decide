@@ -15,7 +15,7 @@
 import SwiftUI
 
 @propertyWrapper
-@MainActor public struct Bind<S: State, Value>: DynamicProperty {
+@MainActor public struct Bind<S: AtomicState, Value>: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservableValue()

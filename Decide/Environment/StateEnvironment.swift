@@ -21,7 +21,7 @@ import Foundation
 
     var storage: [StateKey: Any] = [:]
 
-    subscript<S: State>(_ stateType: S.Type) -> S {
+    subscript<S: AtomicState>(_ stateType: S.Type) -> S {
         let stateKey = StateKey(stateType)
         if let state = storage[stateKey] as? S { return state }
         let newValue = S.init()
@@ -29,7 +29,7 @@ import Foundation
         return newValue
     }
 
-    func getProperty<S: State, Value>(_ propertyKeyPath: KeyPath<S, Property<Value>>) -> Property<Value> {
+    func getProperty<S: AtomicState, Value>(_ propertyKeyPath: KeyPath<S, Property<Value>>) -> Property<Value> {
         self[S.self][keyPath: propertyKeyPath]
     }
 

@@ -26,7 +26,7 @@ public extension EnvironmentValues {
 }
 
 public extension View {
-    func stateManagement(_ value: StateEnvironment) -> some View {
+    func stateEnvironment(_ value: StateEnvironment) -> some View {
         environment(\.stateEnvironment, value)
     }
 }

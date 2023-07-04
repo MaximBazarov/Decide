@@ -12,14 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// State is a managed by ``Environment`` container for ``Property`` and ``DefaultInstance`` definitions,
+/// AtomicState is a managed by ``Environment`` container for ``Property`` and ``DefaultInstance`` definitions,
 /// its only requirement is to provide standalone `init()` so ``Environment`` can instantiate it when necessary.
-/// You should never use instances of ``State`` directly, use ``Property`` or ``DefaultInstance`` instead.
+/// You should never use instances of ``AtomicState`` directly, use ``Property`` or ``DefaultInstance`` instead.
 ///
 /// **Usage:**
 /// ```swift
-/// final class TestState: StateManagement.State {
-///     // Declaration of a State property with a string value
+/// final class TestState: AtomicState {
+///     // Declaration of a AtomicState property with a string value
 ///     // that is "default-value" by default.
 ///     @Property var name: String = "default-value"
 ///
@@ -28,6 +28,6 @@
 ///     @DefaultInstance var networking: NetworkingInterface = Networking()
 /// }
 /// ```
-@MainActor public protocol State: AnyObject {
+@MainActor public protocol AtomicState: AnyObject {
     init()
 }

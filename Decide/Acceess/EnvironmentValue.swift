@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 @propertyWrapper
-@MainActor public struct EnvironmentValue<S: State, Value> {
+@MainActor public struct EnvironmentValue<S: AtomicState, Value> {
 
     public typealias PropertyKeyPath = KeyPath<S, Property<Value>>
 

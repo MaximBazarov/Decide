@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 @propertyWrapper
-@MainActor public struct Instance<S: State, Value> {
+@MainActor public struct Instance<S: AtomicState, Value> {
 
     public typealias PropertyKeyPath = KeyPath<S, Property<Value>>
 

@@ -44,15 +44,15 @@ private extension Mirror {
     }
 
     @MainActor func replaceEnvironment(on child: inout Mirror.Child, with newEnvironment: StateEnvironment) {
-        if let obj = child.value as? Decide.Environment {
-            obj.wrappedValue = newEnvironment
-            return
-        }
-
-        if child.value is IgnoredInMirror { return }
-
-        let m = Mirror(reflecting: child.value)
-        m.replaceEnvironment(with: newEnvironment)
+//        if let obj = child.value as? Decide.StateEnvironment {
+//            obj.wrappedValue = newEnvironment
+//            return
+//        }
+//
+////        if child.value is IgnoredInMirror { return }
+//
+//        let m = Mirror(reflecting: child.value)
+//        m.replaceEnvironment(with: newEnvironment)
     }
 }
 
@@ -62,12 +62,9 @@ private extension Mirror {
 //===----------------------------------------------------------------------===//
 
 public extension StateEnvironment {
-    func set<V, S: State>(_ value: V, at propertyKeyPath: KeyPath<S, Property<V>>) {
-        self.property(of: S.self, at: propertyKeyPath).value = value
-    }
-
-    func set<V, S: State>(_ value: V, at propertyKeyPath: KeyPath<S, Mutable<V>>) {
-        self.property(of: S.self, at: propertyKeyPath).wrappedValue.value = value
+    func set<V, S: AtomicState>(_ value: V, at propertyKeyPath: KeyPath<S, Property<V>>) {
+        let property = getProperty(propertyKeyPath)
+        property.wrappedValue = value
     }
 }
 
@@ -75,28 +72,16 @@ public extension StateEnvironment {
 //===----------------------------------------------------------------------===//
 // MARK: - Assert
 //===----------------------------------------------------------------------===//
+import XCTest
 
 public extension StateEnvironment {
-    func Assert<V: Equatable, S: State>(
+    func Assert<V: Equatable, S: AtomicState>(
         _ propertyKeyPath: KeyPath<S, Property<V>>,
         isEqual value: V,
         file: StaticString = #file,
         line: UInt = #line
     ) {
-        let stateValue = self.property(of: S.self, at: propertyKeyPath).value
-        guard stateValue == value
-        else {
-            return XCTFail("\(String(describing: stateValue)) is not equal \(String(describing: value))", file: file, line: line)
-        }
-    }
-
-    func Assert<V: Equatable, S: State>(
-        _ propertyKeyPath: KeyPath<S, Mutable<V>>,
-        isEqual value: V,
-        file: StaticString = #file,
-        line: UInt = #line
-    ) {
-        let stateValue = self.property(of: S.self, at: propertyKeyPath).wrappedValue.value
+        let stateValue = getProperty(propertyKeyPath).wrappedValue
         guard stateValue == value
         else {
             return XCTFail("\(String(describing: stateValue)) is not equal \(String(describing: value))", file: file, line: line)

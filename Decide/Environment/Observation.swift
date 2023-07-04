@@ -32,12 +32,6 @@ class ObservationSystem {
 
 /// ObservableObject for a value.
 final class ObservableValue: ObservableObject, Hashable {
-//    let context: Context
-
-//    public init(context: Context) {
-//        self.context = context
-//    }
-
     public var id: ObjectIdentifier {
         ObjectIdentifier(self)
     }

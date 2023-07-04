@@ -12,46 +12,41 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import XCTest
+import DecideTesting
+
 @testable import Decide
 
 @MainActor final class StateManagementTests: XCTestCase {
+
+    let propertyUnderTest = \StateUnderTest.$name
+
     func test_DefaultValue_whenDidNotInitialize() throws {
         let sut = StateEnvironment()
-        let state = sut[StateUnderTest.self]
-        XCTAssertEqual(state.name, "default-value")
+
+        sut.Assert(propertyUnderTest,
+                    isEqual: StateUnderTest.defaultSUTName)
     }
 
     func test_ValueForGivenStateType_IsAlwaysTheSame() throws {
         let sut = StateEnvironment()
-
-        var state = sut[StateUnderTest.self]
         let overridden = "overriden"
 
-        state.name = overridden
+        sut.set(overridden, at: propertyUnderTest)
 
-        state = sut[StateUnderTest.self]
-
-        XCTAssertEqual(state.name, overridden)
-    }
-
-    func test_GetProperty_ReturnsDefaultValue() {
-        let sut = StateEnvironment()
-        let kp = \StateUnderTest.$name
-
-        let property = sut.getProperty(kp)
-
-        XCTAssertEqual(property.wrappedValue, "default-value")
+        sut.Assert(propertyUnderTest, isEqual: overridden)
     }
 
     func test_GetProperty_UpdateValue_ReturnsUpdatedValue() {
         let sut = StateEnvironment()
-        let kp = \StateUnderTest.$name
+        let expected = "expected-value"
 
-        let property = sut.getProperty(kp)
-        property.wrappedValue = "newValue"
+        let property = sut.getProperty(propertyUnderTest)
+        let propertyOtherInstance = sut.getProperty(propertyUnderTest)
 
-        let propertyOtherInstance = sut.getProperty(kp)
-        XCTAssertEqual(propertyOtherInstance.wrappedValue, "newValue")
+        property.wrappedValue = expected
+
+        XCTAssertEqual(propertyOtherInstance.wrappedValue, expected)
+        sut.Assert( propertyUnderTest, isEqual: expected)
     }
 }
