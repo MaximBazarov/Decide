@@ -12,19 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
 
-/// Value that exist only once per ``StorageSystem``
-public protocol AtomicState {
-    /// Type of the state's value.
-    associatedtype Value
-    /// Default value for the state, used if read before write.
-    static func defaultValue() -> Value
+/// An object managed by environment
+/// - Instantiated and held by ``StateEnvironment``.
+/// - `environment` value is set to the ``StateEnvironment`` it is executed in.
+/// 
+public protocol EnvironmentManagedObject {
+    var environment: StateEnvironment { get set }
 }
-
-extension AtomicState {
-    static var key: StorageKey {
-        StorageKey(type: Self.self)
-    }
-}
-
