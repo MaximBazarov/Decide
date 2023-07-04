@@ -12,6 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
-
-@MainActor final class DependencySystem {}
+/// Serves as the abstraction for side effects.
+/// Use ``EnvironmentValue`` and ``EnvironmentInstance``
+/// to access values and instances within the environment.
+///
+/// **Usage**
+/// ```swift
+/// 
+/// ```
+public class Effect: EnvironmentManagedObject {
+    public var environment: StateEnvironment = .default
+    open func perform() async {}
+}

@@ -12,19 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import Decide
 
-/// Value that exist only once per ``StorageSystem``
-public protocol AtomicState {
-    /// Type of the state's value.
-    associatedtype Value
-    /// Default value for the state, used if read before write.
-    static func defaultValue() -> Value
+final class StateUnderTest: AtomicState {
+
+    static let defaultSUTName = "default-sut-name"
+
+    @Property var name: String = defaultSUTName    
 }
-
-extension AtomicState {
-    static var key: StorageKey {
-        StorageKey(type: Self.self)
-    }
-}
-

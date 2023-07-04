@@ -25,19 +25,30 @@ let package = Package(
     ],
     products: [
         .library(name: "Decide", targets: ["Decide"]),
+        .library(name: "DecideTesting", targets: ["DecideTesting"]),
     ],
     dependencies: [
     ],
     targets: [
+        // - Decide -
         .target(
             name: "Decide",
             dependencies: [],
-            path: "Sources"
+            path: "Decide"
         ),
         .testTarget(
             name: "Decide-Tests",
+            dependencies: [
+                "Decide",
+                "DecideTesting"
+            ],
+            path: "Decide-Tests"
+        ),
+        // - Decide Testing -
+        .target(
+            name: "DecideTesting",
             dependencies: ["Decide"],
-            path: "Tests"
-        )
+            path: "DecideTesting"
+        ),
     ]
 )
