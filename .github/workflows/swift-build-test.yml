@@ -1,0 +1,23 @@
+name: Unit Tests
+
+on:
+  push:
+    branches:
+    - main
+    paths-ignore:
+    - 'Decide/DecideDocs.docc/**'
+  pull_request:
+    branches:
+    - main
+    paths-ignore:
+    - 'Decide/DecideDocs.docc/**'
+
+jobs:
+  build:
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: swift build -v
+    - name: Test
+      run: swift test
