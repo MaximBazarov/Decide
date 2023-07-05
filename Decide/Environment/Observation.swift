@@ -24,9 +24,11 @@ class ObservationSystem {
     func valueDidChange() {
         let observers = storage
         storage = []
-        observers.forEach { observer in
-            observer.objectWillChange.send()
-        }
+        Task { await MainActor.run {
+            observers.forEach { observer in
+                observer.objectWillChange.send()
+            }
+        }}
     }
 }
 
