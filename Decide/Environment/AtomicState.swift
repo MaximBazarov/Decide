@@ -12,6 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+@MainActor protocol State: AnyObject {
+    init()
+}
+
 /// AtomicState is a managed by ``Environment`` container for ``Property`` and ``DefaultInstance`` definitions,
 /// its only requirement is to provide standalone `init()` so ``Environment`` can instantiate it when necessary.
 /// You should never use instances of ``AtomicState`` directly, use ``Property`` or ``DefaultInstance`` instead.
@@ -28,6 +32,14 @@
 ///     @DefaultInstance var networking: NetworkingInterface = Networking()
 /// }
 /// ```
-@MainActor public protocol AtomicState: AnyObject {
-    init()
+@MainActor open class AtomicState: State {
+    required public init() {
+
+    }
+}
+
+@MainActor open class KeyedState<Identifier: Hashable>: State {
+    required public init() {
+
+    }
 }

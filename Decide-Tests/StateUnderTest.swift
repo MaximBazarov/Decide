@@ -13,10 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 import Decide
+import Foundation
 
 final class StateUnderTest: AtomicState {
 
     static let defaultSUTName = "default-sut-name"
 
     @Property var name: String = defaultSUTName    
+}
+
+final class KeyedStateUnderTest: KeyedState<UUID> {
+
+    static let defaultSUTName = "default-sut-name"
+
+    @Property var name: String = defaultSUTName
+
 }

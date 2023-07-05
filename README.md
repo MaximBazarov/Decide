@@ -4,6 +4,8 @@
 - [ ] **Observable State**
     - [x] Atomic State
     - [ ] Keyed State
+        - [x] Implementation and use in Environment
+        - [ ] Binding
     - [ ] Computed/Selector
     - [ ] Keyed Computed/Selector
 - [ ] **State Access**
