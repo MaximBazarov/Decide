@@ -1,5 +1,5 @@
 # Decide 
-
+[![Unit Tests](https://github.com/MaximBazarov/Decide/actions/workflows/swift-build-test.yml/badge.svg)](https://github.com/MaximBazarov/Decide/actions/workflows/swift-build-test.yml)
 - [x] Environment
 - [ ] **Observable State**
     - [x] Atomic State
