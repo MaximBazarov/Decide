@@ -14,6 +14,7 @@
 
 import Foundation
 
+/// StateEnvironment stores instances of ``AtomicState`` and ``KeyedState`` and provides tools for mutations and asyncronous executions of side-effects.
 @MainActor public final class StateEnvironment {
     enum Key: Hashable {
         case atomic(ObjectIdentifier)

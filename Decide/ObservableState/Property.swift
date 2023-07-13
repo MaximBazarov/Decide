@@ -12,17 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+
+/// Managed by ``StateEnvironment`` storage for values that can be observed and mutated.
+/// 
+/// TBD: how to access and mutate.
 @propertyWrapper
 @MainActor public final class Property<Value> {
-
-    var storage: Value?
-    let defaultValue: () -> Value
-
-    let observations = ObservationSystem()
-
-    func addObserver(_ observer: ObservableValue) {
-        observations.subscribe(observer)
-    }
 
     public var wrappedValue: Value {
         get {
@@ -36,18 +32,29 @@
             storage = newValue
         }
     }
-
-    public var projectedValue: Property<Value> { self }
-
-    let file: String
-    let line: UInt
-
+    
+    public var projectedValue: Property<Value> {
+        self
+    }
+    
     public init(wrappedValue: @autoclosure @escaping () -> Value, file: StaticString = #fileID, line: UInt = #line) {
         self.defaultValue = wrappedValue
         self.file = file.description
         self.line = line
     }
-}
+    
+    // MARK: - Value Storage
+    private var storage: Value?
+    private let defaultValue: () -> Value
 
-/// Typealias to distinguish state values and instances. See ``Property``.
-public typealias DefaultInstance = Property
+    // MARK: - Observation
+    var observations = ObservationSystem() // keep it `var` to be isolated
+
+    func addObserver(_ observer: ObservableValue) {
+        observations.subscribe(observer)
+    }
+    
+    // MARK: - Tracing
+    let file: String
+    let line: UInt
+}

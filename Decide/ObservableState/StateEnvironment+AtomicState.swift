@@ -26,4 +26,8 @@ extension StateEnvironment {
     func getProperty<S: AtomicState, Value>(_ propertyKeyPath: KeyPath<S, Property<Value>>) -> Property<Value> {
         self[S.self][keyPath: propertyKeyPath]
     }
+    
+    func getInstance<S: AtomicState, O: AnyObject>(_ instanceKeyPath: KeyPath<S, DefaultInstance<O>>) -> DefaultInstance<O> {
+        self[S.self][keyPath: instanceKeyPath]
+    }
 }
