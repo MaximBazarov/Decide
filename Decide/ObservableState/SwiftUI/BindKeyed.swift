@@ -14,7 +14,25 @@
 
 import SwiftUI
 
-@MainActor public struct KeyedValueAccess<I: Hashable, S: KeyedState<I>, Value> {
+/// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath on ``KeyedState`` from the view environment.
+@propertyWrapper
+@MainActor public struct BindKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
+
+    @SwiftUI.Environment(\.stateEnvironment) var environment
+    @ObservedObject var observer: ObservableValue
+
+    public var wrappedValue: KeyedValueObserve<I, S, Value>
+    public var projectedValue: KeyedValueBinding<I, S, Value>
+
+    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
+        let observer = ObservableValue()
+        self.observer = observer
+        self.wrappedValue = KeyedValueObserve(propertyKeyPath, observer)
+        self.projectedValue = KeyedValueBinding(propertyKeyPath, observer)
+    }
+}
+
+@MainActor public struct KeyedValueObserve<I: Hashable, S: KeyedState<I>, Value> {
     @SwiftUI.Environment(\.stateEnvironment) var environment
 
     weak var observer: ObservableValue?
@@ -28,21 +46,6 @@ import SwiftUI
             }
             return property.wrappedValue
         }
-        nonmutating set {
-            let property = environment.getProperty(propertyKeyPath, at: identifier)
-            property.wrappedValue = newValue
-        }
-    }
-
-    public var projectedValue: Binding<Value> {
-        Binding<Value>(
-            get: {
-                fatalError()
-            },
-            set: {_ in
-                fatalError()
-            }
-        )
     }
 
     init(_ propertyKeyPath: KeyPath<S, Property<Value>>, _ observer: ObservableValue) {
@@ -79,19 +82,3 @@ import SwiftUI
     }
 }
 
-@propertyWrapper
-@MainActor public struct BindKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
-
-    @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer: ObservableValue
-
-    public var wrappedValue: KeyedValueAccess<I, S, Value>
-    public var projectedValue: KeyedValueBinding<I, S, Value>
-
-    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
-        let observer = ObservableValue()
-        self.observer = observer
-        self.wrappedValue = KeyedValueAccess(propertyKeyPath, observer)
-        self.projectedValue = KeyedValueBinding(propertyKeyPath, observer)
-    }
-}

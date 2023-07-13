@@ -14,9 +14,10 @@
 
 import SwiftUI
 
+
+/// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath on ``AtomicState``from the view environment.
 @propertyWrapper
 @MainActor public struct Bind<S: AtomicState, Value>: DynamicProperty {
-
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservableValue()
 
