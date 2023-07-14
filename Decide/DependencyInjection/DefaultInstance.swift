@@ -15,7 +15,7 @@
 import Foundation
 
 
-/// Managed by ``StateEnvironment`` storage for objects, unlike ``Property`` it doesn't support mutation nor observation.
+/// Managed by ``ApplicationEnvironment`` storage for objects, unlike ``Property`` it doesn't support mutation nor observation.
 @propertyWrapper
 @MainActor public final class DefaultInstance<O: AnyObject> {
     public var wrappedValue: O {

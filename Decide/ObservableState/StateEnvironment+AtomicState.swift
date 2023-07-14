@@ -14,7 +14,7 @@
 
 import Foundation
 
-extension StateEnvironment {
+extension ApplicationEnvironment {
     subscript<S: AtomicState>(_ stateType: S.Type) -> S {
         let key = Key.atomic(ObjectIdentifier(stateType))
         if let state = storage[key] as? S { return state }

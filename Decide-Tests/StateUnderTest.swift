@@ -16,16 +16,9 @@ import Decide
 import Foundation
 
 final class StateUnderTest: AtomicState {
-
-    static let defaultSUTName = "default-sut-name"
-
-    @Property var name: String = defaultSUTName    
+    @Property var name: String = "default-sut-name"
 }
 
 final class KeyedStateUnderTest: KeyedState<UUID> {
-
-    static let defaultSUTName = "default-sut-name"
-
-    @Property var name: String = defaultSUTName
-
+    @Property var name: String = "default-sut-name"
 }

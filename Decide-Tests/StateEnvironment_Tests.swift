@@ -14,7 +14,6 @@
 
 import XCTest
 import DecideTesting
-
 @testable import Decide
 
 @MainActor final class StateManagementTests: XCTestCase {
@@ -22,14 +21,15 @@ import DecideTesting
     let propertyUnderTest = \StateUnderTest.$name
 
     func test_DefaultValue_whenDidNotInitialize() throws {
-        let sut = StateEnvironment()
+        let sut = ApplicationEnvironment()
+        let property = sut.getProperty(\StateUnderTest.$name)
 
         sut.Assert(propertyUnderTest,
-                    isEqual: StateUnderTest.defaultSUTName)
+                   isEqual: property.defaultValue())
     }
 
     func test_ValueForGivenStateType_IsAlwaysTheSame() throws {
-        let sut = StateEnvironment()
+        let sut = ApplicationEnvironment()
         let overridden = "overriden"
 
         sut.set(overridden, at: propertyUnderTest)
@@ -38,7 +38,7 @@ import DecideTesting
     }
 
     func test_GetProperty_UpdateValue_ReturnsUpdatedValue() {
-        let sut = StateEnvironment()
+        let sut = ApplicationEnvironment()
         let expected = "expected-value"
 
         let property = sut.getProperty(propertyUnderTest)

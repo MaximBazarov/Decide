@@ -16,8 +16,8 @@
     init()
 }
 
-/// AtomicState is a managed by ``StateEnvironment`` container for ``Property`` and ``DefaultInstance`` definitions,
-/// its only requirement is to provide standalone `init()` so ``StateEnvironment`` can instantiate it when necessary.
+/// AtomicState is a managed by ``ApplicationEnvironment`` container for ``Property`` and ``DefaultInstance`` definitions,
+/// its only requirement is to provide standalone `init()` so ``ApplicationEnvironment`` can instantiate it when necessary.
 /// You should never use instances of ``AtomicState`` directly, use ``Property`` or ``DefaultInstance`` instead.
 ///
 /// **Usage:**

@@ -14,7 +14,7 @@
 
 import Foundation
 
-extension StateEnvironment {
+extension ApplicationEnvironment {
     subscript<I:Hashable, S: KeyedState<I>>(_ stateType: S.Type, _ identifier: I) -> S {
         let key = Key.keyed(ObjectIdentifier(stateType), identifier)
         if let state = storage[key] as? S { return state }

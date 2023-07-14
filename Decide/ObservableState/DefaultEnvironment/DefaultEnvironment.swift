@@ -12,11 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 
-/// An object managed by environment
-/// - Instantiated and held by ``ApplicationEnvironment``.
-/// - `environment` value is set to the ``ApplicationEnvironment`` it is executed in.
-/// 
-public protocol EnvironmentManagedObject {
-    @MainActor var environment: ApplicationEnvironment { get set }
+@MainActor @propertyWrapper final class DefaultEnvironment {
+    var wrappedValue: ApplicationEnvironment = .default
 }
