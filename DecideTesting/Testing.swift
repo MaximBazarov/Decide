@@ -15,47 +15,6 @@
 import Foundation
 @testable import Decide
 
-//
-//public extension StateValue {
-//    init(_ propertyKeyPath: KeyPath<S, Property<Value>>, env: ApplicationEnvironment) {
-//        self.init(propertyKeyPath)
-//        self.environment = env
-//    }
-//}
-//
-//public extension StateBinding {
-//    init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, env: ApplicationEnvironment) {
-//        self.init(propertyKeyPath)
-//        self.environment = env
-//    }
-//}
-
-@MainActor public func WithEnvironment<T>(_ environment: ApplicationEnvironment, object: T) -> T {
-    Mirror(reflecting: object).replaceEnvironment(with: environment)
-    return object
-}
-
-private extension Mirror {
-
-    @MainActor func replaceEnvironment(with newEnvironment: ApplicationEnvironment) {
-        for var child in children {
-            replaceEnvironment(on: &child, with: newEnvironment)
-        }
-    }
-
-    @MainActor func replaceEnvironment(on child: inout Mirror.Child, with newEnvironment: ApplicationEnvironment) {
-//        if let obj = child.value as? Decide.ApplicationEnvironment {
-//            obj.wrappedValue = newEnvironment
-//            return
-//        }
-//
-////        if child.value is IgnoredInMirror { return }
-//
-//        let m = Mirror(reflecting: child.value)
-//        m.replaceEnvironment(with: newEnvironment)
-    }
-}
-
 
 //===----------------------------------------------------------------------===//
 // MARK: - Set state

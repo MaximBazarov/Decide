@@ -19,13 +19,20 @@ import DecideTesting
 @testable import Decide
 
 @MainActor final class DefaultBindTests: XCTestCase {
-    
+
+    class EnvironmentObservingNestedObject: EnvironmentObservingObject {
+        func environmentDidUpdate() {}
+        @DefaultEnvironment var environment
+    }
+
     class EnvironmentObservingObjectUnderTest: EnvironmentObservingObject {
         @DefaultEnvironment var environment
         @DefaultBind(\StateUnderTest.$name) var put
-        
+
         var updatesCount: UInt = 0
-        
+
+        let nestedObject = EnvironmentObservingNestedObject()
+
         func didLoad() {
             // in order to subscribe to the properties this object is reading we need to call reading.
             environmentDidUpdate()
@@ -42,6 +49,8 @@ import DecideTesting
         let sut = WithEnvironment(env, object: EnvironmentObservingObjectUnderTest())
         
         XCTAssert(sut.$put.environment === env,
+                  "@DefaultBind environment was not overriden")
+        XCTAssert(sut.nestedObject.environment === env,
                   "@DefaultBind environment was not overriden")
     }
     

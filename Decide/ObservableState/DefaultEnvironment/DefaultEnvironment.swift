@@ -14,6 +14,18 @@
 
 import Foundation
 
-@MainActor @propertyWrapper final class DefaultEnvironment {
-    var wrappedValue: ApplicationEnvironment = .default
+@MainActor public protocol EnvironmentObservingObject: EnvironmentManagedObject {
+    @MainActor func environmentDidUpdate()
+}
+
+/// Property wrapper to access default environment,
+/// to be used on ``EnvironmentManagedObject`` and ``EnvironmentObservingObject``.
+///
+/// Usage:
+/// ```swift
+/// @DefaultEnvironment var environment
+/// ```
+@MainActor @propertyWrapper public final class DefaultEnvironment {
+    public var wrappedValue: ApplicationEnvironment = .default
+    public init() {}
 }

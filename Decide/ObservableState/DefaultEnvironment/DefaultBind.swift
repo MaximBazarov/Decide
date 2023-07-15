@@ -14,13 +14,9 @@
 
 import Foundation
 
-
-@MainActor public protocol EnvironmentObservingObject: EnvironmentManagedObject {
-    @MainActor func environmentDidUpdate()
-}
-
 @propertyWrapper
 @MainActor public struct DefaultBind<S: AtomicState, Value> {
+    @DefaultEnvironment var environment
 
     public typealias PropertyKeyPath = KeyPath<S, Property<Value>>
 
@@ -29,8 +25,6 @@ import Foundation
     public init(_ keyPath: KeyPath<S, Property<Value>>) {
         self.propertyKeyPath = keyPath
     }
-    
-    var environment: ApplicationEnvironment = .default
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
