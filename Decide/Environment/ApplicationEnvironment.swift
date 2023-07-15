@@ -14,14 +14,14 @@
 
 import Foundation
 
-/// StateEnvironment stores instances of ``AtomicState`` and ``KeyedState`` and provides tools for mutations and asyncronous executions of side-effects.
-@MainActor public final class StateEnvironment {
+/// ApplicationEnvironment stores instances of ``AtomicState`` and ``KeyedState`` and provides tools for mutations and asyncronous executions of side-effects.
+@MainActor public final class ApplicationEnvironment {
     enum Key: Hashable {
         case atomic(ObjectIdentifier)
         case keyed(ObjectIdentifier, AnyHashable)
     }
 
-    static let `default` = StateEnvironment()
+    static let `default` = ApplicationEnvironment()
 
     var storage: [Key: Any] = [:]
 

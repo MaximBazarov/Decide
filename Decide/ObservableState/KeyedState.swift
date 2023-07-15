@@ -14,7 +14,22 @@
 
 import Foundation
 
-extension StateEnvironment {
+/// KeyedState is a collection of ``AtomicState`` accessed by `Identifier`.
+///
+/// **Usage:**
+/// ```swift
+/// final class TestKeyedState: KeyedState<UUID> {
+///     @Property var name: String = "default-value"
+///     @DefaultInstance var networking: NetworkingInterface = Networking()
+/// }
+///
+/// ```
+/// to access the state `Identifier` will have to be provided together with ``Property`` KeyPath.
+@MainActor open class KeyedState<Identifier: Hashable> {
+    required public init() {}
+}
+
+extension ApplicationEnvironment {
     subscript<I:Hashable, S: KeyedState<I>>(_ stateType: S.Type, _ identifier: I) -> S {
         let key = Key.keyed(ObjectIdentifier(stateType), identifier)
         if let state = storage[key] as? S { return state }

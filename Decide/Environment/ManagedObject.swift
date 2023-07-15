@@ -14,9 +14,9 @@
 
 
 /// An object managed by environment
-/// - Instantiated and held by ``StateEnvironment``.
-/// - `environment` value is set to the ``StateEnvironment`` it is executed in.
+/// - Instantiated and held by ``ApplicationEnvironment``.
+/// - `environment` value is set to the ``ApplicationEnvironment`` it is executed in.
 /// 
-public protocol EnvironmentManagedObject {
-    var environment: StateEnvironment { get set }
+public protocol EnvironmentManagedObject: AnyObject {
+    @MainActor var environment: ApplicationEnvironment { get set }
 }

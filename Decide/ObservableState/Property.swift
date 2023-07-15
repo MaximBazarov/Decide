@@ -14,7 +14,7 @@
 
 
 
-/// Managed by ``StateEnvironment`` storage for values that can be observed and mutated.
+/// Managed by ``ApplicationEnvironment`` storage for values that can be observed and mutated.
 /// 
 /// TBD: how to access and mutate.
 @propertyWrapper
@@ -28,7 +28,7 @@
             return newValue
         }
         set {
-            observations.valueDidChange()
+            observationSystem.valueDidChange()
             storage = newValue
         }
     }
@@ -44,15 +44,11 @@
     }
     
     // MARK: - Value Storage
-    private var storage: Value?
-    private let defaultValue: () -> Value
+    var storage: Value?
+    let defaultValue: () -> Value
 
     // MARK: - Observation
-    var observations = ObservationSystem() // keep it `var` to be isolated
-
-    func addObserver(_ observer: ObservableValue) {
-        observations.subscribe(observer)
-    }
+    private(set) var observationSystem = ObservationSystem() // keep it `var` to be isolated
     
     // MARK: - Tracing
     let file: String

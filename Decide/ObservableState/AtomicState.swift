@@ -12,12 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-@MainActor protocol State: AnyObject {
-    init()
-}
+import Foundation
 
-/// AtomicState is a managed by ``StateEnvironment`` container for ``Property`` and ``DefaultInstance`` definitions,
-/// its only requirement is to provide standalone `init()` so ``StateEnvironment`` can instantiate it when necessary.
+
+/// AtomicState is a managed by ``ApplicationEnvironment`` container for ``Property`` and ``DefaultInstance`` definitions,
+/// its only requirement is to provide standalone `init()` so ``ApplicationEnvironment`` can instantiate it when necessary.
 /// You should never use instances of ``AtomicState`` directly, use ``Property`` or ``DefaultInstance`` instead.
 ///
 /// **Usage:**
@@ -32,21 +31,25 @@
 ///     @DefaultInstance var networking: NetworkingInterface = Networking()
 /// }
 /// ```
-@MainActor open class AtomicState: State {
+@MainActor open class AtomicState {
     required public init() {}
 }
 
-/// KeyedState is a collection of ``AtomicState`` accessed by `Identifier`.
-///
-/// **Usage:**
-/// ```swift
-/// final class TestKeyedState: KeyedState<UUID> {
-///     @Property var name: String = "default-value"
-///     @DefaultInstance var networking: NetworkingInterface = Networking()
-/// }
-///
-/// ```
-/// to access the state `Identifier` will have to be provided together with ``Property`` KeyPath.
-@MainActor open class KeyedState<Identifier: Hashable>: State {
-    required public init() {}
+
+extension ApplicationEnvironment {
+    subscript<S: AtomicState>(_ stateType: S.Type) -> S {
+        let key = Key.atomic(ObjectIdentifier(stateType))
+        if let state = storage[key] as? S { return state }
+        let newValue = S.init()
+        storage[key] = newValue
+        return newValue
+    }
+
+    func getProperty<S: AtomicState, Value>(_ propertyKeyPath: KeyPath<S, Property<Value>>) -> Property<Value> {
+        self[S.self][keyPath: propertyKeyPath]
+    }
+    
+    func getInstance<S: AtomicState, O: AnyObject>(_ instanceKeyPath: KeyPath<S, DefaultInstance<O>>) -> DefaultInstance<O> {
+        self[S.self][keyPath: instanceKeyPath]
+    }
 }

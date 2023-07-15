@@ -15,22 +15,22 @@
 import SwiftUI
 
 @MainActor private struct StateEnvironmentKey: EnvironmentKey {
-    /// Default ``StateEnvironment`` value
-    public static let defaultValue: StateEnvironment = .default
+    /// Default ``ApplicationEnvironment`` value
+    public static let defaultValue: ApplicationEnvironment = .default
 }
 
 public extension EnvironmentValues {
     
-    /// Overrides ``StateEnvironment`` in the view environment`
-    var stateEnvironment: StateEnvironment {
+    /// Overrides ``ApplicationEnvironment`` in the view environment`
+    var stateEnvironment: ApplicationEnvironment {
         get { self[StateEnvironmentKey.self] }
         set { self[StateEnvironmentKey.self] = newValue }
     }
 }
 
 public extension View {
-    /// Overrides ``StateEnvironment`` in the view environment`
-    func stateEnvironment(_ value: StateEnvironment) -> some View {
+    /// Overrides ``ApplicationEnvironment`` in the view environment`
+    func stateEnvironment(_ value: ApplicationEnvironment) -> some View {
         environment(\.stateEnvironment, value)
     }
 }

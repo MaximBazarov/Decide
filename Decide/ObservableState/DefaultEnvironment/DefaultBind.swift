@@ -12,8 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
+
 @propertyWrapper
-@MainActor public struct EnvironmentValue<S: AtomicState, Value> {
+@MainActor public struct DefaultBind<S: AtomicState, Value> {
+    @DefaultEnvironment var environment
 
     public typealias PropertyKeyPath = KeyPath<S, Property<Value>>
 
@@ -23,25 +26,28 @@
         self.propertyKeyPath = keyPath
     }
 
-    public static subscript<EnclosingObject: EnvironmentManagedObject>(
+    public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
         wrapped wrappedKeyPath: KeyPath<EnclosingObject, Value>,
         storage storageKeyPath: KeyPath<EnclosingObject, Self>
     ) -> Value {
         get {
-            let storage: Self = instance[keyPath: storageKeyPath]
-            let propertyKeyPath: KeyPath<S, Property<Value>> = storage.propertyKeyPath
-            let environment: StateEnvironment = instance.environment
-            let property: Property<Value> = environment.getProperty(propertyKeyPath)
+            let storage = instance[keyPath: storageKeyPath]
+            let propertyKeyPath = storage.propertyKeyPath
+            storage.environment = instance.environment
+            let property = storage.environment.getProperty(propertyKeyPath)
+            property.observationSystem.subscribe(instance)
             return property.wrappedValue
         }
         set {
             let propertyKeyPath: KeyPath<S, Property<Value>> = instance[keyPath: storageKeyPath].propertyKeyPath
-            let environment: StateEnvironment = instance.environment
+            let environment: ApplicationEnvironment = instance.environment
             let property: Property<Value> = environment.getProperty(propertyKeyPath)
             property.wrappedValue = newValue
         }
     }
+    
+    public var projectedValue: Self { self }
 
     @available(*, unavailable, message: "@EnvironmentValue can only be enclosed by Effects or Decisions.")
     public var wrappedValue: Value {
