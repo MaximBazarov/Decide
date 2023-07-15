@@ -28,4 +28,43 @@ import Foundation
 @MainActor @propertyWrapper public final class DefaultEnvironment {
     public var wrappedValue: ApplicationEnvironment = .default
     public init() {}
+
+    @MainActor final class ObservationSystem {
+        var subscriberStorage: Set<WeakEnvironmentObservingObject> = []
+
+        func subscribe(
+            _ object: EnvironmentObservingObject
+        ) {
+            let weakObject = WeakEnvironmentObservingObject(object)
+            guard subscriberStorage.contains(weakObject) else {
+                subscriberStorage.insert(weakObject)
+                return
+            }
+            subscriberStorage.insert(weakObject)
+        }
+
+        func didChangeValue() {
+            subscriberStorage.forEach({ subscriber in
+                subscriber.value?.environmentDidUpdate()
+            })
+
+            subscriberStorage = []
+        }
+    }
+
+    final class WeakEnvironmentObservingObject: Hashable {
+        weak var value: EnvironmentObservingObject?
+
+        init(_ value: EnvironmentObservingObject) {
+            self.value = value
+        }
+
+        static func == (lhs: WeakEnvironmentObservingObject, rhs: WeakEnvironmentObservingObject) -> Bool {
+            ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(ObjectIdentifier(self))
+        }
+    }
 }

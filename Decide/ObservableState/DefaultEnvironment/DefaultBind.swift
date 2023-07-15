@@ -32,11 +32,11 @@ import Foundation
         storage storageKeyPath: KeyPath<EnclosingObject, Self>
     ) -> Value {
         get {
-            var storage: Self = instance[keyPath: storageKeyPath]
-            let propertyKeyPath: KeyPath<S, Property<Value>> = storage.propertyKeyPath
+            let storage = instance[keyPath: storageKeyPath]
+            let propertyKeyPath = storage.propertyKeyPath
             storage.environment = instance.environment
-            let property: Property<Value> = storage.environment.getProperty(propertyKeyPath)
-            
+            let property = storage.environment.getProperty(propertyKeyPath)
+            property.observationSystem.subscribe(instance)
             return property.wrappedValue
         }
         set {

@@ -28,7 +28,7 @@
             return newValue
         }
         set {
-            observations.valueDidChange()
+            observationSystem.valueDidChange()
             storage = newValue
         }
     }
@@ -48,11 +48,7 @@
     let defaultValue: () -> Value
 
     // MARK: - Observation
-    var observations = ObservationSystem() // keep it `var` to be isolated
-
-    func addObserver(_ observer: ObservableValue) {
-        observations.subscribe(observer)
-    }
+    private(set) var observationSystem = ObservationSystem() // keep it `var` to be isolated
     
     // MARK: - Tracing
     let file: String

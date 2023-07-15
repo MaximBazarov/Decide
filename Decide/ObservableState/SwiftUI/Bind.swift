@@ -29,7 +29,7 @@ import SwiftUI
 
     public var wrappedValue: Value {
         get {
-            property.addObserver(observer)
+            property.observationSystem.subscribe(observer)
             return property.wrappedValue
         }
         nonmutating set {

@@ -36,6 +36,7 @@ import DecideTesting
         func didLoad() {
             // in order to subscribe to the properties this object is reading we need to call reading.
             environmentDidUpdate()
+            updatesCount -= 1
         }
         
         func environmentDidUpdate() {
@@ -54,7 +55,7 @@ import DecideTesting
                   "@DefaultBind environment was not overriden")
     }
     
-    func test_Observation_DefaultBind_getNotifiedOnPropertyUpdate() {
+    func test_Observation_DefaultBind_getNotifiedOnPropertyUpdate() async {
         let env = ApplicationEnvironment()
         let sut = WithEnvironment(env, object: EnvironmentObservingObjectUnderTest())
         let property = env.getProperty(\StateUnderTest.$name)
@@ -62,7 +63,11 @@ import DecideTesting
         sut.didLoad()
         property.wrappedValue = "test"
         
-        // One update is happening on load.
-        XCTAssertEqual(sut.updatesCount, 2)
+        // Notification is asynchronous
+        try? await Task.sleep(nanoseconds: 10)
+
+        XCTAssertEqual(sut.updatesCount, 1)
     }
+
+    //TODO: Decisions test that one decision produces one update
 }

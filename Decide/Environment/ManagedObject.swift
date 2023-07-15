@@ -17,6 +17,6 @@
 /// - Instantiated and held by ``ApplicationEnvironment``.
 /// - `environment` value is set to the ``ApplicationEnvironment`` it is executed in.
 /// 
-public protocol EnvironmentManagedObject {
+public protocol EnvironmentManagedObject: AnyObject {
     @MainActor var environment: ApplicationEnvironment { get set }
 }

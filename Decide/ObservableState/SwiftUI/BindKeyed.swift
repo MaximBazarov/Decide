@@ -42,7 +42,7 @@ import SwiftUI
         get {
             let property = environment.getProperty(propertyKeyPath, at: identifier)
             if let observer {
-                property.addObserver(observer)
+                property.observationSystem.subscribe(observer)
             }
             return property.wrappedValue
         }
@@ -65,7 +65,7 @@ import SwiftUI
             get: {
                 let property = environment.getProperty(propertyKeyPath, at: identifier)
                 if let observer {
-                    property.addObserver(observer)
+                    property.observationSystem.subscribe(observer)
                 }
                 return property.wrappedValue
             },
