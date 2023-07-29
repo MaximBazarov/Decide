@@ -14,14 +14,14 @@
 import SwiftUI
 
 @propertyWrapper
-@MainActor public struct Instance<S: AtomicState, O: AnyObject> {
+@MainActor public struct Instance<S: AtomicState, O> {
 
     public typealias PropertyKeyPath = KeyPath<S, DefaultInstance<O>>
 
-    private let propertyKeyPath: PropertyKeyPath
+    private let instanceKeyPath: PropertyKeyPath
 
     public init(_ keyPath: KeyPath<S, DefaultInstance<O>>) {
-        self.propertyKeyPath = keyPath
+        self.instanceKeyPath = keyPath
     }
 
     public static subscript<EnclosingObject: EnvironmentManagedObject>(
@@ -31,10 +31,9 @@ import SwiftUI
     ) -> O {
         get {
             let storage = instance[keyPath: storageKeyPath]
-            let propertyKeyPath = storage.propertyKeyPath
+            let instanceKeyPath = storage.instanceKeyPath
             let environment = instance.environment
-            let property = environment.getInstance(propertyKeyPath)
-            return property.wrappedValue
+            return environment.defaultInstance(at: instanceKeyPath).wrappedValue
         }
     }
 
@@ -43,3 +42,13 @@ import SwiftUI
         get { fatalError() }
     }
 }
+
+extension ApplicationEnvironment {
+    func defaultInstance<S: AtomicState, O>(
+        at keyPath: KeyPath<S, DefaultInstance<O>>
+    ) -> DefaultInstance<O> {
+        let storage: S = self[S.key()]
+        return storage[keyPath: keyPath]
+    }
+}
+

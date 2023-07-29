@@ -14,7 +14,7 @@
 
 import SwiftUI
 
-/// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath on ``KeyedState`` from the view environment.
+/// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath and a Key on ``KeyedState`` from the view environment.
 @propertyWrapper
 @MainActor public struct BindKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
 
@@ -24,7 +24,7 @@ import SwiftUI
     public var wrappedValue: KeyedValueObserve<I, S, Value>
     public var projectedValue: KeyedValueBinding<I, S, Value>
 
-    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
         let observer = ObservableValue()
         self.observer = observer
         self.wrappedValue = KeyedValueObserve(propertyKeyPath, observer)
@@ -40,12 +40,16 @@ import SwiftUI
 
     public subscript(_ identifier: I) -> Value {
         get {
-            let property = environment.getProperty(propertyKeyPath, at: identifier)
             if let observer {
-                property.observationSystem.subscribe(observer)
+                environment.subscribe(observer, on: propertyKeyPath, at: identifier)
             }
-            return property.wrappedValue
+            return environment.getValue(propertyKeyPath, at: identifier)
         }
+    }
+
+    init<P: PropertyModifier>(_ propertyKeyPath: KeyPath<S, P>, _ observer: ObservableValue) where P.Value == Value {
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+        self.observer = observer
     }
 
     init(_ propertyKeyPath: KeyPath<S, Property<Value>>, _ observer: ObservableValue) {
@@ -58,25 +62,23 @@ import SwiftUI
     @SwiftUI.Environment(\.stateEnvironment) var environment
 
     weak var observer: ObservableValue?
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<S, Mutable<Value>>
 
     public subscript(_ identifier: I) -> Binding<Value> {
         Binding<Value>(
             get: {
-                let property = environment.getProperty(propertyKeyPath, at: identifier)
                 if let observer {
-                    property.observationSystem.subscribe(observer)
+                    environment.subscribe(observer, on: propertyKeyPath, at: identifier)
                 }
-                return property.wrappedValue
+                return environment.getValue(propertyKeyPath, at: identifier)
             },
             set: {
-                let property = environment.getProperty(propertyKeyPath, at: identifier)
-                property.wrappedValue = $0
+                return environment.setValue($0, propertyKeyPath, at: identifier)
             }
         )
     }
 
-    init(_ propertyKeyPath: KeyPath<S, Property<Value>>, _ observer: ObservableValue) {
+    init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, _ observer: ObservableValue) {
         self.propertyKeyPath = propertyKeyPath
         self.observer = observer
     }

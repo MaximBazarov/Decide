@@ -14,10 +14,9 @@
 
 import Foundation
 
-
 /// Managed by ``ApplicationEnvironment`` storage for objects, unlike ``Property`` it doesn't support mutation nor observation.
 @propertyWrapper
-@MainActor public final class DefaultInstance<O: AnyObject> {
+@MainActor public final class DefaultInstance<O> {
     public var wrappedValue: O {
         get {
             if let storage { return storage }
@@ -45,3 +44,4 @@ import Foundation
     let file: String
     let line: UInt
 }
+

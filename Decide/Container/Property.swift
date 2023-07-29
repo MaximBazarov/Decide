@@ -12,44 +12,39 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
 /// Managed by ``ApplicationEnvironment`` storage for values that can be observed and mutated.
 /// 
 /// TBD: how to access and mutate.
 @propertyWrapper
 @MainActor public final class Property<Value> {
 
+    private(set) var valueContainer: ValueContainer<Value>
+    let defaultValue: () -> Value
+
+    /// Default Value
     public var wrappedValue: Value {
         get {
-            if let storage { return storage }
+            if let value = valueContainer.value { return value }
             let newValue = defaultValue()
-            storage = newValue
+            valueContainer.value = newValue
             return newValue
         }
         set {
-            observationSystem.valueDidChange()
-            storage = newValue
+            valueContainer.value = newValue
         }
     }
-    
+
     public var projectedValue: Property<Value> {
         self
     }
-    
+
     public init(wrappedValue: @autoclosure @escaping () -> Value, file: StaticString = #fileID, line: UInt = #line) {
+        self.valueContainer = ValueContainer()
         self.defaultValue = wrappedValue
         self.file = file.description
         self.line = line
     }
-    
-    // MARK: - Value Storage
-    var storage: Value?
-    let defaultValue: () -> Value
 
-    // MARK: - Observation
-    private(set) var observationSystem = ObservationSystem() // keep it `var` to be isolated
-    
     // MARK: - Tracing
     let file: String
     let line: UInt

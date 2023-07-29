@@ -1,5 +1,4 @@
 //===----------------------------------------------------------------------===//
-//===----------------------------------------------------------------------===//
 //
 // This source file is part of the Decide package open source project
 //
@@ -18,33 +17,35 @@ import DecideTesting
 
 @testable import Decide
 
-@MainActor final class KeyedStateTests: XCTestCase {
-
+@MainActor final class DirectMutation_Tests: XCTestCase {
+    
     let propertyUnderTest = \KeyedStateUnderTest.$name
-
+    
     func test_DefaultValue_whenDidNotInitialize() throws {
         let sut = ApplicationEnvironment()
         let id = UUID()
-        let property = sut.getProperty(propertyUnderTest, at: id)
-        sut.Assert(propertyUnderTest,
-                   at: id,
-                   isEqual: property.defaultValue())
+        sut.AssertValueAt(
+            propertyUnderTest,
+            at: id,
+            isEqual: KeyedStateUnderTest.defaultName)
     }
-
+    
     func test_WriteAndReadState_WithSameID() throws {
         let sut = ApplicationEnvironment()
         let identifier = UUID()
         let value = "my-test-value"
-        let id = UUID()
-        let property = sut.getProperty(propertyUnderTest, at: id)
-
-        sut.set(value, with: identifier, at: propertyUnderTest)
-        sut.Assert(propertyUnderTest,
-                   at: identifier,
-                   isEqual: value)
-
-        sut.Assert(propertyUnderTest,
-                   at: UUID(),
-                   isEqual: property.defaultValue())
+        
+        sut.setValue(value, propertyUnderTest, at: identifier)
+        
+        sut.AssertValueAt(
+            propertyUnderTest,
+            at: identifier,
+            isEqual: value)
+        
+        sut.AssertValueAt(
+            propertyUnderTest,
+            at: UUID(),
+            isEqual: KeyedStateUnderTest.defaultName)
     }
 }
+

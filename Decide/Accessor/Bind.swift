@@ -21,34 +21,30 @@ import SwiftUI
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservableValue()
 
-    let propertyKeyPath: KeyPath<S, Property<Value>>
-
-    var property: Property<Value> {
-        environment.getProperty(propertyKeyPath)
-    }
+    let propertyKeyPath: KeyPath<S, Mutable<Value>>
 
     public var wrappedValue: Value {
         get {
-            property.observationSystem.subscribe(observer)
-            return property.wrappedValue
+            environment.subscribe(observer, on: propertyKeyPath)
+            return environment.getValue(propertyKeyPath)
         }
         nonmutating set {
-            property.wrappedValue = newValue
+            environment.setValue(newValue, propertyKeyPath)
         }
     }
 
     public var projectedValue: Binding<Value> {
         Binding<Value>(
             get: {
-                property.wrappedValue
+                wrappedValue
             },
             set: {
-                property.wrappedValue = $0
+                wrappedValue = $0
             }
         )
     }
 
-    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
         self.propertyKeyPath = propertyKeyPath
     }
 }

@@ -22,31 +22,19 @@ import DecideTesting
 
     func test_DefaultValue_whenDidNotInitialize() throws {
         let sut = ApplicationEnvironment()
-        let property = sut.getProperty(\StateUnderTest.$name)
 
-        sut.Assert(propertyUnderTest,
-                   isEqual: property.defaultValue())
+        sut.AssertValueAt(
+            propertyUnderTest,
+            isEqual: StateUnderTest.defaultName)
     }
 
     func test_ValueForGivenStateType_IsAlwaysTheSame() throws {
         let sut = ApplicationEnvironment()
         let overridden = "overriden"
 
-        sut.set(overridden, at: propertyUnderTest)
+        sut.setValue(overridden, propertyUnderTest)
 
-        sut.Assert(propertyUnderTest, isEqual: overridden)
-    }
-
-    func test_GetProperty_UpdateValue_ReturnsUpdatedValue() {
-        let sut = ApplicationEnvironment()
-        let expected = "expected-value"
-
-        let property = sut.getProperty(propertyUnderTest)
-        let propertyOtherInstance = sut.getProperty(propertyUnderTest)
-
-        property.wrappedValue = expected
-
-        XCTAssertEqual(propertyOtherInstance.wrappedValue, expected)
-        sut.Assert( propertyUnderTest, isEqual: expected)
+        sut.AssertValueAt(propertyUnderTest, isEqual: overridden)
     }
 }
+

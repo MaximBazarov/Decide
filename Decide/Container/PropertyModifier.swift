@@ -12,16 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Decide
 import Foundation
 
-final class StateUnderTest: AtomicState {
-    static let defaultName = "default-atomic-state-name"
-    @Mutable @Property var name = defaultName
+@MainActor protocol PropertyModifier {
+    associatedtype Value
+    var wrappedValue: Property<Value> { get }
 }
-
-final class KeyedStateUnderTest: KeyedState<UUID> {
-    static let defaultName = "default-keyed-state-name"
-    @Mutable @Property var name = defaultName
-}
-
