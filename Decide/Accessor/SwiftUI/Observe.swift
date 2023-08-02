@@ -19,18 +19,25 @@ import SwiftUI
 @propertyWrapper
 @MainActor public struct Observe<S: AtomicState, Value>: DynamicProperty {
     @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer = ObservableValue()
-
-    let propertyKeyPath: KeyPath<S, Mutable<Value>>
-
+    @ObservedObject var observer = ValueWillChangeNotification()
+    
+    let propertyKeyPath: KeyPath<S, Property<Value>>
+    
     public var wrappedValue: Value {
         get {
-            environment.subscribe(observer, on: propertyKeyPath)
+            environment.subscribe(Observer(observer), on: propertyKeyPath)
             return environment.getValue(propertyKeyPath)
         }
     }
-
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+    
+    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
         self.propertyKeyPath = propertyKeyPath
     }
+    
+    public init<P: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<S, P>
+    ) where P.Value == Value {
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+    }
 }
+

@@ -19,14 +19,25 @@ import SwiftUI
 @MainActor public struct ObserveKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer: ObservableValue
+    @ObservedObject var observer = ValueWillChangeNotification()
 
-    public var wrappedValue: KeyedValueObserve<I, S, Value>
+    let propertyKeyPath: KeyPath<S, Property<Value>>
+    public lazy var wrappedValue: KeyedValueObserve<I, S, Value> = {
+        return KeyedValueObserve(
+            bind: propertyKeyPath,
+            observer: Observer(observer),
+            environment: environment
+        )
+    }()
 
     public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
-        let observer = ObservableValue()
-        self.observer = observer
-        self.wrappedValue = KeyedValueObserve(propertyKeyPath, observer)
+        self.propertyKeyPath = propertyKeyPath
+    }
+
+    public init<P: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<S, P>
+    ) where P.Value == Value {
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
     
 }

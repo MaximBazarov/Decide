@@ -37,15 +37,16 @@ public extension ApplicationEnvironment {
 
     /// Asserts that value at given KeyPath is equal to given value.
     func AssertValueAt<
+        P: PropertyModifier,
         V: Equatable,
         S: AtomicState
-    >(
-        _ keyPath: KeyPath<S, Mutable<V>>,
+    > (
+        _ keyPath: KeyPath<S, P>,
         isEqual value: V,
         file: StaticString = #file,
         line: UInt = #line
-    ) {
-        let containerValue = getValue(keyPath)
+    ) where P.Value == V {
+        let containerValue = getValue(keyPath.appending(path: \.wrappedValue))
         AssertValueIn(containerValue, isEqual: value, file: file, line: line)
     }
 
@@ -88,17 +89,18 @@ public extension ApplicationEnvironment {
 
     /// Asserts that value at given KeyPath and Identifier is equal to given value.
     func AssertValueAt<
+        P: PropertyModifier,
         V: Equatable,
         I: Hashable,
         S: KeyedState<I>
     >(
-        _ keyPath: KeyPath<S, Mutable<V>>,
+        _ keyPath: KeyPath<S, P>,
         at identifier: I,
         isEqual value: V,
         file: StaticString = #file,
         line: UInt = #line
-    ) {
-        let containerValue = getValue(keyPath, at: identifier)
+    ) where P.Value == V {
+        let containerValue = getValue(keyPath.appending(path: \.wrappedValue), at: identifier)
         AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
     }
 

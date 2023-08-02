@@ -9,7 +9,15 @@
     }
   ],
   "defaultOptions" : {
-    "codeCoverage" : false
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:",
+          "identifier" : "Decide",
+          "name" : "Decide"
+        }
+      ]
+    }
   },
   "testTargets" : [
     {

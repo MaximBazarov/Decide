@@ -68,6 +68,4 @@ import DecideTesting
 
         XCTAssertEqual(sut.updatesCount, 1)
     }
-
-    //TODO: Decisions test that one decision produces one update
 }

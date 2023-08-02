@@ -37,27 +37,35 @@
 }
 
 extension ApplicationEnvironment {
+    //===------------------------------------------------------------------===//
+    // MARK: - Observability
+    //===------------------------------------------------------------------===//
+    func notifyObservers<S: AtomicState, Value>(
+        _ keyPath: KeyPath<S, Property<Value>>
+    ) {
+        let observers = popObservers(keyPath)
+        observers.forEach { $0.notify() }
+    }
+
+    func popObservers<S: AtomicState, Value>(
+        _ keyPath: KeyPath<S, Property<Value>>
+    ) -> Set<Observer> {
+        let storage: S = self[S.key()]
+        return storage[keyPath: keyPath].valueContainer.observerStorage.popObservers()
+    }
+
 
     //===------------------------------------------------------------------===//
     // MARK: - AtomicState/Property
     //===------------------------------------------------------------------===//
 
-    /// Subscribe ``ObservableValue`` at ``Property`` KeyPath on ``AtomicState``.
+    /// Subscribe ``Observer`` at ``Property`` KeyPath on ``AtomicState``.
     func subscribe<S: AtomicState, Value>(
-        _ observableValue: ObservableValue,
+        _ observer: Observer,
         on keyPath: KeyPath<S, Property<Value>>
     ) {
         let storage: S = self[S.key()]
-        storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(observableValue)
-    }
-
-    /// Subscribe ``EnvironmentObservingObject`` at ``Property`` KeyPath on ``AtomicState``.
-    func subscribe<S: AtomicState, Value>(
-        _ object: EnvironmentObservingObject,
-        on keyPath: KeyPath<S, Property<Value>>
-    ) {
-        let storage: S = self[S.key()]
-        storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(object)
+        storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(observer)
     }
 
     /// Get value at ``Property`` KeyPath on ``AtomicState``.
@@ -71,47 +79,5 @@ extension ApplicationEnvironment {
         let storage: S = self[S.key()]
         storage[keyPath: keyPath].wrappedValue = newValue
         notifyObservers(keyPath)
-    }
-
-    //===------------------------------------------------------------------===//
-    // MARK: - AtomicState/PropertyModifier
-    //===------------------------------------------------------------------===//
-
-    /// Subscribe ``ObservableValue`` at ``PropertyModifier`` KeyPath on ``AtomicState``.
-    func subscribe<S: AtomicState, P: PropertyModifier, Value>(
-        _ observableValue: ObservableValue,
-        on keyPath: KeyPath<S, P>
-    ) where P.Value == Value {
-        let storage: S = self[S.key()]
-        storage[keyPath: keyPath.appending(path: \.wrappedValue)]
-            .projectedValue
-            .valueContainer
-            .observerStorage
-            .subscribe(observableValue)
-    }
-
-    /// Subscribe ``EnvironmentObservingObject`` at ``PropertyModifier`` KeyPath on ``AtomicState``.
-    func subscribe<S: AtomicState, P: PropertyModifier, Value>(
-        _ object: EnvironmentObservingObject,
-        on keyPath: KeyPath<S, P>
-    ) where P.Value == Value {
-        let storage: S = self[S.key()]
-        storage[keyPath: keyPath.appending(path: \.wrappedValue)]
-            .projectedValue
-            .valueContainer
-            .observerStorage
-            .subscribe(object)
-    }
-
-    /// Get value at ``PropertyModifier`` KeyPath on ``AtomicState``.
-    func getValue<S: AtomicState, Value, P: PropertyModifier>(_ keyPath: KeyPath<S, P>) -> Value where P.Value == Value {
-        let storage: S = self[S.key()]
-        return storage[keyPath: keyPath.appending(path: \.wrappedValue)].wrappedValue
-    }
-
-    /// Set value at ``PropertyModifier`` KeyPath on ``AtomicState``.
-    func setValue<S: AtomicState, Value, P: PropertyModifier>(_ newValue: Value, _ keyPath: KeyPath<S, P>) where P.Value == Value {
-        let storage: S = self[S.key()]
-        storage[keyPath: keyPath.appending(path: \.wrappedValue)].wrappedValue = newValue
     }
 }

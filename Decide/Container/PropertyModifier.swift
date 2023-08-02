@@ -14,7 +14,8 @@
 
 import Foundation
 
-@MainActor protocol PropertyModifier {
+/// Modifier applied to property to change it bechaviour e.g ``Mutable`` alows property to be directly mutated through bindings e.g. ``Bind``.
+@MainActor public protocol PropertyModifier {
     associatedtype Value
     var wrappedValue: Property<Value> { get }
 }

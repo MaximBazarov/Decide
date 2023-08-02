@@ -14,16 +14,17 @@
 
 import Foundation
 
-
-@available(*, unavailable, message: "Not available due to swift bug: https://github.com/apple/swift/issues/67561")
+/// 
 @propertyWrapper
-@MainActor public struct DefaultObserve<S: AtomicState, Value> {
+@MainActor public struct DefaultBind<S: AtomicState, Value> {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<S, Mutable<Value>>
+    private let propertyKeyPath: KeyPath<S, Property<Value>>
 
-    public init(_ keyPath: KeyPath<S, Mutable<Value>>) {
-        self.propertyKeyPath = keyPath
+    public init(
+        _ keyPath: KeyPath<S, Mutable<Value>>
+    ) {
+        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
@@ -35,12 +36,19 @@ import Foundation
             let storage = instance[keyPath: storageKeyPath]
             let propertyKeyPath = storage.propertyKeyPath
             let environment = instance.environment
-            // storage.environment = environment // enable when available
-            environment.subscribe(instance, on: propertyKeyPath)
+            storage.environment = environment
+            environment.subscribe(Observer(instance), on: propertyKeyPath)
             return environment.getValue(propertyKeyPath)
         }
+        set {
+            let storage = instance[keyPath: storageKeyPath]
+            let propertyKeyPath = storage.propertyKeyPath
+            let environment = instance.environment
+            storage.environment = environment
+            environment.setValue(newValue, propertyKeyPath)
+        }
     }
-
+    
     public var projectedValue: Self { self }
 
     @available(*, unavailable, message: "@DefaultBind can only be enclosed by EnvironmentObservingObject.")

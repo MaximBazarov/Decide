@@ -15,17 +15,55 @@
 import Foundation
 import Combine
 
-@MainActor final class ObserverStorage {
-    var observers: Set<Observer> = []
 
-    func subscribe(_ object: EnvironmentObservingObject) {
-        guard let observer = try? Observer(WeakEnvironmentObservingObject(object))
-        else { return }
-        observers.insert(observer)
+/// Holds a week reference to actual observer, notifies only if object still exist.
+final class Observer: Hashable {
+    final class Notification {
+        let notify: () -> Void
+
+        init(notify: @escaping () -> Void) {
+            self.notify = notify
+        }
     }
 
-    func subscribe(_ observableValue: ObservableValue) {
-        observers.insert(Observer(observableValue))
+    private var notification: Notification
+    private var id: ObjectIdentifier
+
+    @MainActor init(_ observer: ValueWillChangeNotification) {
+        self.notification = Notification { [weak observer] in
+            observer?.objectWillChange.send()
+        }
+        self.id = ObjectIdentifier(observer)
+    }
+
+    @MainActor init(_ observer: EnvironmentObservingObject) {
+        self.notification = Notification { [weak observer] in
+            observer?.environmentDidUpdate()
+        }
+        self.id = ObjectIdentifier(observer)
+    }
+
+    @MainActor func notify() {
+        notification.notify()
+    }
+
+    static func == (lhs: Observer, rhs: Observer) -> Bool {
+        return lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+/// ObservableObject for a value.
+final class ValueWillChangeNotification: ObservableObject {}
+
+@MainActor final class ObserverStorage {
+    private var observers: Set<Observer> = []
+
+    func subscribe(_ observer: Observer) {
+        observers.insert(observer)
     }
 
     func popObservers() -> Set<Observer> {
@@ -35,123 +73,3 @@ import Combine
     }
 }
 
-final class Observer: Hashable {
-    private var notification: Notification
-    private var id: ObjectIdentifier
-
-    init(_ observer: ObservableValue) {
-        self.notification = .observableValue(observer)
-        self.id = ObjectIdentifier(observer)
-    }
-
-    struct ObjectDeallocated: Error {}
-    init(_ observer: WeakEnvironmentObservingObject) throws {
-        guard let object = observer.value else {
-            throw ObjectDeallocated()
-        }
-        self.notification = .observingObject(observer)
-        self.id = ObjectIdentifier(object)
-    }
-
-    enum Notification {
-        case observableValue(ObservableValue)
-        case observingObject(WeakEnvironmentObservingObject)
-    }
-
-    @MainActor func notify() {
-        switch notification {
-        case .observableValue(let observableValue):
-            observableValue.objectWillChange.send()
-        case .observingObject(let environmentObservingObject):
-            environmentObservingObject.value?.environmentDidUpdate()
-        }
-    }
-
-    public static func == (lhs: Observer, rhs: Observer) -> Bool {
-        return lhs.id == rhs.id
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-}
-
-/// ObservableObject for a value.
-final class ObservableValue: ObservableObject {}
-
-final class WeakEnvironmentObservingObject {
-    weak var value: EnvironmentObservingObject?
-
-    init(_ value: EnvironmentObservingObject) {
-        self.value = value
-    }
-}
-
-extension ApplicationEnvironment {
-
-    func notifyObservers<S: AtomicState, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>
-    ) {
-        let observers = popObservers(keyPath)
-        observers.forEach { $0.notify() }
-    }
-
-    func notifyObservers<S: AtomicState, P: PropertyModifier, Value>(
-        _ keyPath: KeyPath<S, P>
-    ) where P.Value == Value {
-        let observers = popObservers(keyPath)
-        observers.forEach { $0.notify() }
-    }
-
-    func notifyObservers<I: Hashable, S: KeyedState<I>, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>,
-        _ identifier: I
-    ) {
-        let observers = popObservers(keyPath, identifier)
-        observers.forEach { $0.notify() }
-    }
-
-    func notifyObservers<I: Hashable, S: KeyedState<I>, P: PropertyModifier, Value>(
-        _ keyPath: KeyPath<S, P>,
-        _ identifier: I
-    ) where P.Value == Value {
-        let observers = popObservers(keyPath, identifier)
-        observers.forEach { $0.notify() }
-    }
-
-    func popObservers<S: AtomicState, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>
-    ) -> Set<Observer> {
-        let storage: S = self[S.key()]
-        return storage[keyPath: keyPath].valueContainer.observerStorage.popObservers()
-    }
-
-    func popObservers<S: AtomicState, P: PropertyModifier, Value>(
-        _ keyPath: KeyPath<S, P>
-    ) -> Set<Observer> where P.Value == Value {
-        let storage: S = self[S.key()]
-        return storage[keyPath: keyPath.appending(path: \.wrappedValue)]
-            .valueContainer
-            .observerStorage
-            .popObservers()
-    }
-
-    func popObservers<I: Hashable, S: KeyedState<I>, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>,
-        _ identifier: I
-    ) -> Set<Observer> {
-        let storage: S = self[S.key(identifier)]
-        return storage[keyPath: keyPath].valueContainer.observerStorage.popObservers()
-    }
-
-    func popObservers<I: Hashable, S: KeyedState<I>, P: PropertyModifier, Value>(
-        _ keyPath: KeyPath<S, P>,
-        _ identifier: I
-    ) -> Set<Observer> where P.Value == Value {
-        let storage: S = self[S.key(identifier)]
-        return storage[keyPath: keyPath.appending(path: \.wrappedValue)]
-            .valueContainer
-            .observerStorage
-            .popObservers()
-    }
-}
