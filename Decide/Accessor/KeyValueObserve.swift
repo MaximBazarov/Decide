@@ -17,17 +17,8 @@ import Foundation
 @MainActor public struct KeyedValueObserve<I: Hashable, S: KeyedState<I>, Value> {
     unowned var environment: ApplicationEnvironment
 
-    var observer: Observer?
+    let observer: Observer
     let propertyKeyPath: KeyPath<S, Property<Value>>
-
-    public subscript(_ identifier: I) -> Value {
-        get {
-            if let observer {
-                environment.subscribe(observer, on: propertyKeyPath, at: identifier)
-            }
-            return environment.getValue(propertyKeyPath, at: identifier)
-        }
-    }
 
     init(
         bind propertyKeyPath: KeyPath<S, Property<Value>>,
@@ -38,4 +29,13 @@ import Foundation
         self.observer = observer
         self.environment = environment
     }
+
+    public subscript(_ identifier: I) -> Value {
+        get {
+            environment.subscribe(observer, on: propertyKeyPath, at: identifier)
+            return environment.getValue(propertyKeyPath, at: identifier)
+        }
+    }
+
+
 }

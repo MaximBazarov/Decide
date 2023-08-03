@@ -23,6 +23,10 @@ import SwiftUI
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+    }
+
     public lazy var wrappedValue: KeyedValueObserve<I, S, Value> = {
         return KeyedValueObserve(
             bind: propertyKeyPath,
@@ -38,8 +42,4 @@ import SwiftUI
             environment: environment
         )
     }()
-
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
-        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
-    }
 }

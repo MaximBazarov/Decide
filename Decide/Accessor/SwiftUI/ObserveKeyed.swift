@@ -16,19 +16,16 @@ import SwiftUI
 
 /// **SwiftUI** property wrapper that provides read only access to the value by ``Property`` KeyPath and a Key on ``KeyedState`` from the view environment.
 @propertyWrapper
-@MainActor public struct ObserveKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
+@MainActor public struct ObserveKeyed<
+    I: Hashable,
+    S: KeyedState<I>,
+    Value
+>: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ValueWillChangeNotification()
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
-    public lazy var wrappedValue: KeyedValueObserve<I, S, Value> = {
-        return KeyedValueObserve(
-            bind: propertyKeyPath,
-            observer: Observer(observer),
-            environment: environment
-        )
-    }()
 
     public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
         self.propertyKeyPath = propertyKeyPath
@@ -39,5 +36,12 @@ import SwiftUI
     ) where P.Value == Value {
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
-    
+
+    public lazy var wrappedValue: KeyedValueObserve<I, S, Value> = {
+        return KeyedValueObserve(
+            bind: propertyKeyPath,
+            observer: Observer(observer),
+            environment: environment
+        )
+    }()
 }

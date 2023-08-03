@@ -23,13 +23,6 @@ import SwiftUI
     
     let propertyKeyPath: KeyPath<S, Property<Value>>
     
-    public var wrappedValue: Value {
-        get {
-            environment.subscribe(Observer(observer), on: propertyKeyPath)
-            return environment.getValue(propertyKeyPath)
-        }
-    }
-    
     public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
         self.propertyKeyPath = propertyKeyPath
     }
@@ -38,6 +31,13 @@ import SwiftUI
         _ propertyKeyPath: KeyPath<S, P>
     ) where P.Value == Value {
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+    }
+    
+    public var wrappedValue: Value {
+        get {
+            environment.subscribe(Observer(observer), on: propertyKeyPath)
+            return environment.getValue(propertyKeyPath)
+        }
     }
 }
 

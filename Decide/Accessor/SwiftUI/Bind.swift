@@ -23,6 +23,10 @@ import SwiftUI
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+    }
+
     public var wrappedValue: Value {
         get {
             environment.subscribe(Observer(observer), on: propertyKeyPath)
@@ -35,22 +39,9 @@ import SwiftUI
 
     public var projectedValue: Binding<Value> {
         Binding<Value>(
-            get: {
-                wrappedValue
-            },
-            set: {
-                wrappedValue = $0
-            }
+            get: { wrappedValue },
+            set: { wrappedValue = $0 }
         )
     }
 
-    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
-        self.propertyKeyPath = propertyKeyPath
-    }
-    
-    public init<P: PropertyModifier>(
-        _ propertyKeyPath: KeyPath<S, P>
-    ) where P.Value == Value {
-        self.init(propertyKeyPath.appending(path: \.wrappedValue))
-    }
 }
