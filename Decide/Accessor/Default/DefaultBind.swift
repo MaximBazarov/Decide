@@ -14,16 +14,17 @@
 
 import Foundation
 
+/// 
 @propertyWrapper
 @MainActor public struct DefaultBind<S: AtomicState, Value> {
     @DefaultEnvironment var environment
 
-    public typealias PropertyKeyPath = KeyPath<S, Property<Value>>
+    private let propertyKeyPath: KeyPath<S, Property<Value>>
 
-    private let propertyKeyPath: PropertyKeyPath
-
-    public init(_ keyPath: KeyPath<S, Property<Value>>) {
-        self.propertyKeyPath = keyPath
+    public init(
+        _ keyPath: KeyPath<S, Mutable<Value>>
+    ) {
+        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
@@ -34,22 +35,23 @@ import Foundation
         get {
             let storage = instance[keyPath: storageKeyPath]
             let propertyKeyPath = storage.propertyKeyPath
-            storage.environment = instance.environment
-            let property = storage.environment.getProperty(propertyKeyPath)
-            property.observationSystem.subscribe(instance)
-            return property.wrappedValue
+            let environment = instance.environment
+            storage.environment = environment
+            environment.subscribe(Observer(instance), on: propertyKeyPath)
+            return environment.getValue(propertyKeyPath)
         }
         set {
-            let propertyKeyPath: KeyPath<S, Property<Value>> = instance[keyPath: storageKeyPath].propertyKeyPath
-            let environment: ApplicationEnvironment = instance.environment
-            let property: Property<Value> = environment.getProperty(propertyKeyPath)
-            property.wrappedValue = newValue
+            let storage = instance[keyPath: storageKeyPath]
+            let propertyKeyPath = storage.propertyKeyPath
+            let environment = instance.environment
+            storage.environment = environment
+            environment.setValue(newValue, propertyKeyPath)
         }
     }
     
     public var projectedValue: Self { self }
 
-    @available(*, unavailable, message: "@EnvironmentValue can only be enclosed by Effects or Decisions.")
+    @available(*, unavailable, message: "@DefaultBind can only be enclosed by EnvironmentObservingObject.")
     public var wrappedValue: Value {
         get { fatalError() }
         set { fatalError() }

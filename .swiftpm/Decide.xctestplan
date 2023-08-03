@@ -1,0 +1,32 @@
+{
+  "configurations" : [
+    {
+      "id" : "BE371829-992E-448C-8AD6-5C0B334E375A",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:",
+          "identifier" : "Decide",
+          "name" : "Decide"
+        }
+      ]
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "Decide-Tests",
+        "name" : "Decide-Tests"
+      }
+    }
+  ],
+  "version" : 1
+}

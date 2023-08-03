@@ -12,16 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Decide
 import Foundation
 
-final class StateUnderTest: AtomicState {
-    static let defaultName = "default-atomic-state-name"
-    @Mutable @Property var name = defaultName
-}
+/// Single source of truth for values in ``ApplicationEnvironment``.
+@MainActor public final class ValueContainer<Value> {
+    var value: Value?
+    private(set) var observerStorage = ObserverStorage()
+    private(set) var persistencyStrategy: PersistencyStrategy<Value>?
 
-final class KeyedStateUnderTest: KeyedState<UUID> {
-    static let defaultName = "default-keyed-state-name"
-    @Mutable @Property var name = defaultName
+    init() {}
 }
-

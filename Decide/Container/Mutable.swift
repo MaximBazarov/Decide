@@ -12,16 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Decide
-import Foundation
 
-final class StateUnderTest: AtomicState {
-    static let defaultName = "default-atomic-state-name"
-    @Mutable @Property var name = defaultName
+/// Marks property as mutable, to use in bindings e.g. ``Bind``
+@propertyWrapper @MainActor public final class Mutable<Value>: PropertyModifier {
+    private(set) public var wrappedValue: Property<Value>
+    public var projectedValue: Mutable<Value> { self }
+    public init(wrappedValue: Property<Value>) {
+        self.wrappedValue = wrappedValue
+    }
 }
-
-final class KeyedStateUnderTest: KeyedState<UUID> {
-    static let defaultName = "default-keyed-state-name"
-    @Mutable @Property var name = defaultName
-}
-

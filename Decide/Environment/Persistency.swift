@@ -12,11 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 
-/// An object managed by environment
-/// - Instantiated and held by ``ApplicationEnvironment``.
-/// - `environment` value is set to the ``ApplicationEnvironment`` it is executed in.
-/// 
-public protocol EnvironmentManagedObject: AnyObject {
-    @MainActor var environment: ApplicationEnvironment { get set }
+@MainActor public class PersistencyStrategy<Value> {
+    private(set) var valueContainer: ValueContainer<Value>
+
+    public init(valueContainer: ValueContainer<Value>) {
+        self.valueContainer = valueContainer
+    }
+
+    func valueDidChange() {
+        fatalError("Not implemented")
+    }
 }

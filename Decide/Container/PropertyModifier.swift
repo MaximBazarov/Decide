@@ -14,16 +14,8 @@
 
 import Foundation
 
-/// ApplicationEnvironment stores instances of ``AtomicState`` and ``KeyedState`` and provides tools for mutations and asyncronous executions of side-effects.
-@MainActor public final class ApplicationEnvironment {
-    enum Key: Hashable {
-        case atomic(ObjectIdentifier)
-        case keyed(ObjectIdentifier, AnyHashable)
-    }
-
-    static let `default` = ApplicationEnvironment()
-
-    var storage: [Key: Any] = [:]
-
-    public init() {}
+/// Modifier applied to property to change it bechaviour e.g ``Mutable`` alows property to be directly mutated through bindings e.g. ``Bind``.
+@MainActor public protocol PropertyModifier {
+    associatedtype Value
+    var wrappedValue: Property<Value> { get }
 }

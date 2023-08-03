@@ -44,30 +44,28 @@ import DecideTesting
             updatesCount += 1
         }
     }
-    
+
     func test_DefaultBind_WithEnvironment_OverridesEnvironment() {
         let env = ApplicationEnvironment()
         let sut = WithEnvironment(env, object: EnvironmentObservingObjectUnderTest())
         
         XCTAssert(sut.$put.environment === env,
-                  "@DefaultBind environment was not overriden")
+                  "Environment was not overridden")
         XCTAssert(sut.nestedObject.environment === env,
-                  "@DefaultBind environment was not overriden")
+                  "Environment was not overridden")
+        
     }
-    
-    func test_Observation_DefaultBind_getNotifiedOnPropertyUpdate() async {
+    //===------------------------------------------------------------------===//
+    // MARK: - Default Bind/Observe observability
+    //===------------------------------------------------------------------===//
+
+    func test_Observation_DefaultBind_directMutation_getNotifiedOnPropertyUpdate() async {
         let env = ApplicationEnvironment()
         let sut = WithEnvironment(env, object: EnvironmentObservingObjectUnderTest())
-        let property = env.getProperty(\StateUnderTest.$name)
         
         sut.didLoad()
-        property.wrappedValue = "test"
-        
-        // Notification is asynchronous
-        try? await Task.sleep(nanoseconds: 10)
+        env.setValue("test", \StateUnderTest.$name)
 
         XCTAssertEqual(sut.updatesCount, 1)
     }
-
-    //TODO: Decisions test that one decision produces one update
 }
