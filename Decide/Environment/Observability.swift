@@ -29,7 +29,7 @@ final class Observer: Hashable {
     private var notification: Notification
     private var id: ObjectIdentifier
 
-    @MainActor init(_ observer: ValueWillChangeNotification) {
+    @MainActor init(_ observer: ObservedObjectWillChangeNotification) {
         self.notification = Notification { [weak observer] in
             observer?.objectWillChange.send()
         }
@@ -57,7 +57,7 @@ final class Observer: Hashable {
 }
 
 /// ObservableObject for a value.
-final class ValueWillChangeNotification: ObservableObject {}
+final class ObservedObjectWillChangeNotification: ObservableObject {}
 
 @MainActor final class ObserverStorage {
     private var observers: Set<Observer> = []

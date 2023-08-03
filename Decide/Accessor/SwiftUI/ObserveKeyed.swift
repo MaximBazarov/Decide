@@ -23,7 +23,7 @@ import SwiftUI
 >: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer = ValueWillChangeNotification()
+    @ObservedObject var observer = ObservedObjectWillChangeNotification()
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 

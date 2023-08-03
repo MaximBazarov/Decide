@@ -19,7 +19,7 @@ import SwiftUI
 @MainActor public struct BindKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer = ValueWillChangeNotification()
+    @ObservedObject var observer = ObservedObjectWillChangeNotification()
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 

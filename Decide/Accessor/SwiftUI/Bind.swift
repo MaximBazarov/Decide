@@ -19,7 +19,7 @@ import SwiftUI
 @propertyWrapper
 @MainActor public struct Bind<S: AtomicState, Value>: DynamicProperty {
     @SwiftUI.Environment(\.stateEnvironment) var environment
-    @ObservedObject var observer = ValueWillChangeNotification()
+    @ObservedObject var observer = ObservedObjectWillChangeNotification()
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
