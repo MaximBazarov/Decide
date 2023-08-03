@@ -14,7 +14,7 @@ They offer a more intuitive approach to business requirements, thereby enhancing
 Decide also eliminates the need for dependency injection anywhere but effects and some services [and provides tools](#dependency-injection) to define `DefaultInstance` as a variation of property and access it with `Instance` property wrapper to obtain the instance. 
 
 
-Additionaly **DecideTesting** provides tools to replace the environment and track execution in tests, allowing for the implementation of functionality tests (black box testing) as easily as unit tests. For more information on the mentioned APIs, you can refer to the official Apple documentation for , 
+Additionaly **DecideTesting** provides tools to replace the environment and track execution in tests, allowing for the implementation of functionality tests (black box testing) as easily as unit tests. 
 
 
 ## Decision
@@ -24,9 +24,7 @@ Additionaly **DecideTesting** provides tools to replace the environment and trac
 ## Dependency Injection
 
 # Decide Testing
-- a library that makes testing of Decide-based code easier by providing convenient syntax sugar. 
-- [ ] Recursive Override Of Environment
-
+A library that makes testing of Decide-based code easier by providing convenient syntax sugar. 
 
 # Caveats
 2. Cyclic computations: easy to make a cycle in Computation's dependencies by reading each other.
