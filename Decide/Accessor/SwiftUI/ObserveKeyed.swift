@@ -27,7 +27,13 @@ import SwiftUI
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
+        self.propertyKeyPath = propertyKeyPath
+    }
+
+    public init<P: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<S, P>
+    ) where P.Value == Value {
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 

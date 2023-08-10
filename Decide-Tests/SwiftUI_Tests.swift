@@ -26,9 +26,13 @@ import DecideTesting
 
     struct ViewUnderTest: View {
         @BindKeyed(\State.$strMutable) var strMutable
+        @ObserveKeyed(\State.$str) var str
+        @ObserveKeyed(\State.$strMutable) var strMutableObserved
 
         var body: some View {
             TextField("", text: strMutable[1])
+            Text(str[1])
+            Text(strMutableObserved[1])
         }
     }
 
