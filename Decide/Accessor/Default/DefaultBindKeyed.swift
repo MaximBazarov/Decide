@@ -59,3 +59,30 @@ import Foundation
         set { fatalError() }
     }
 }
+
+@MainActor public struct KeyedValueBinding<I: Hashable, S: KeyedState<I>, Value> {
+    unowned var environment: ApplicationEnvironment
+
+    let observer: Observer
+    let propertyKeyPath: KeyPath<S, Property<Value>>
+
+    init(
+        bind propertyKeyPath: KeyPath<S, Property<Value>>,
+        observer: Observer,
+        environment: ApplicationEnvironment
+    ) {
+        self.propertyKeyPath = propertyKeyPath
+        self.observer = observer
+        self.environment = environment
+    }
+
+    public subscript(_ identifier: I) -> Value {
+        get {
+            environment.subscribe(observer, on: propertyKeyPath, at: identifier)
+            return environment.getValue(propertyKeyPath, at: identifier)
+        }
+        set {
+            environment.setValue(newValue, propertyKeyPath, at: identifier)
+        }
+    }
+}

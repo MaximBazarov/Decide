@@ -93,7 +93,7 @@ import DecideTesting
         XCTAssertEqual(sut.updatesCount, 3)
         XCTAssertEqual(sut.str[id], newValue)
         XCTAssertEqual(sut.strMutableObserve[id], newValue)
-        XCTAssertEqual(sut.strMutable[id].wrappedValue, newValue)
+        XCTAssertEqual(sut.strMutable[id], newValue)
     }
 
     func test_Observation_BindSet() async {
@@ -107,12 +107,12 @@ import DecideTesting
 
         let newValue = "\(#function)-modified"
 
-        sut2.strMutable[id].wrappedValue = newValue
+        sut2.strMutable[id] = newValue
         env.setValue(newValue, \State.$str, at: id)
 
 
         XCTAssertEqual(sut.updatesCount, 2)
-        XCTAssertEqual(sut.strMutable[id].wrappedValue, newValue)
+        XCTAssertEqual(sut.strMutable[id], newValue)
         XCTAssertEqual(sut.str[id], newValue)
         XCTAssertEqual(sut.strMutableObserve[id], newValue)
     }
