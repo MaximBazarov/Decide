@@ -27,19 +27,29 @@ import SwiftUI
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 
-    public lazy var wrappedValue: KeyedValueObserve<I, S, Value> = {
-        return KeyedValueObserve(
-            bind: propertyKeyPath,
-            observer: Observer(observer),
-            environment: environment
+    public subscript(_ identifier: I) -> Binding<Value> {
+        Binding<Value>(
+            get: {
+                environment.subscribe(
+                    Observer(observer),
+                    on: propertyKeyPath,
+                    at: identifier)
+                return environment.getValue(propertyKeyPath, at: identifier)
+            },
+            set: {
+                return environment.setValue($0, propertyKeyPath, at: identifier)
+            }
         )
-    }()
+    }
 
-    public lazy var projectedValue: KeyedValueBinding<I, S, Value> = {
-        return KeyedValueBinding(
-            bind: propertyKeyPath,
-            observer: Observer(observer),
-            environment: environment
-        )
-    }()
+    public subscript(_ identifier: I) -> Value {
+        get {
+            environment.subscribe(Observer(observer), on: propertyKeyPath, at: identifier)
+            return environment.getValue(propertyKeyPath, at: identifier)
+        }
+    }
+
+    public var wrappedValue: Self {
+        self
+    }
 }
