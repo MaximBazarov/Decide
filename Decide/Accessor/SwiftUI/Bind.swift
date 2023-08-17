@@ -20,10 +20,13 @@ import SwiftUI
 @MainActor public struct Bind<S: AtomicState, Value>: DynamicProperty {
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
+    let context: Context
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, file: String = #fileID, line: Int = #line) {
+        let context = Context(file: file, line: line)
+        self.context = context
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 
@@ -34,6 +37,7 @@ import SwiftUI
         }
         nonmutating set {
             environment.setValue(newValue, propertyKeyPath)
+            environment.telemetry.log(event: UnstructuredMutation(context: context, keyPath: "\(propertyKeyPath)", value: newValue))
         }
     }
 

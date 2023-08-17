@@ -20,10 +20,14 @@ import SwiftUI
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
+    let context: Context
+
 
     let propertyKeyPath: KeyPath<S, Property<Value>>
 
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, file: String = #fileID, line: Int = #line) {
+        let context = Context(file: file, line: line)
+        self.context = context
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 
@@ -37,7 +41,8 @@ import SwiftUI
                 return environment.getValue(propertyKeyPath, at: identifier)
             },
             set: {
-                return environment.setValue($0, propertyKeyPath, at: identifier)
+                environment.setValue($0, propertyKeyPath, at: identifier)
+                environment.telemetry.log(event: UnstructuredMutation(context: context, keyPath: "\(propertyKeyPath):\(identifier)", value: $0))
             }
         )
     }

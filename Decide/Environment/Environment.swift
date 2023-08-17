@@ -28,6 +28,21 @@ import Foundation
     static let `default` = ApplicationEnvironment()
 
     var storage: [Key: Any] = [:]
+    let telemetry: Telemetry = {
+        guard let config = ProcessInfo
+            .processInfo
+            .environment["DECIDE_TRACER"]
+        else {
+            return Telemetry(observer: OSLogTelemetryObserver()) // .noTelemetry 
+        }
+
+        if config.replacingOccurrences(of: " ", with: "").lowercased() == "oslog" {
+            return Telemetry(observer: OSLogTelemetryObserver())
+        }
+
+        // OSLog by default
+        return Telemetry(observer: OSLogTelemetryObserver()) // .noTelemetry
+    }()
 
     subscript<S: ValueContainerStorage>(_ key: Key) -> S {
         if let state = storage[key] as? S { return state }

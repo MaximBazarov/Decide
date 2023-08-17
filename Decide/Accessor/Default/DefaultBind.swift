@@ -20,11 +20,16 @@ import Foundation
     @DefaultEnvironment var environment
 
     private let propertyKeyPath: KeyPath<S, Property<Value>>
+    let context: Context
 
     public init(
-        _ keyPath: KeyPath<S, Mutable<Value>>
+        _ keyPath: KeyPath<S, Mutable<Value>>,
+        file: String = #fileID,
+        line: Int = #line
     ) {
-        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
+        let context = Context(file: file, line: line)
+        self.context = context
+        self.propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
@@ -46,6 +51,7 @@ import Foundation
             let environment = instance.environment
             storage.environment = environment
             environment.setValue(newValue, propertyKeyPath)
+            environment.telemetry.log(event: UnstructuredMutation(context: storage.context, keyPath: "\(propertyKeyPath)", value: newValue))
         }
     }
     
