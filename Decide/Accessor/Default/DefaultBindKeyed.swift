@@ -21,11 +21,16 @@ import Foundation
 
     private let propertyKeyPath: KeyPath<S, Property<Value>>
     private var valueBinding: KeyedValueBinding<I, S, Value>?
+    let context: Context
 
     public init(
-        _ keyPath: KeyPath<S, Mutable<Value>>
+        _ keyPath: KeyPath<S, Mutable<Value>>,
+        file: String = #fileID,
+        line: Int = #line
     ) {
-        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
+        let context = Context(file: file, line: line)
+        self.context = context
+        self.propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
@@ -43,7 +48,8 @@ import Foundation
                 storage.valueBinding = KeyedValueBinding(
                     bind: propertyKeyPath,
                     observer: observer,
-                    environment: environment
+                    environment: environment,
+                    context: storage.context
                 )
             }
             return storage.valueBinding!
@@ -65,12 +71,15 @@ import Foundation
 
     let observer: Observer
     let propertyKeyPath: KeyPath<S, Property<Value>>
+    let context: Context
 
     init(
         bind propertyKeyPath: KeyPath<S, Property<Value>>,
         observer: Observer,
-        environment: ApplicationEnvironment
+        environment: ApplicationEnvironment,
+        context: Context
     ) {
+        self.context = context
         self.propertyKeyPath = propertyKeyPath
         self.observer = observer
         self.environment = environment
@@ -83,6 +92,7 @@ import Foundation
         }
         set {
             environment.setValue(newValue, propertyKeyPath, at: identifier)
+            environment.telemetry.log(event: UnstructuredMutation(context: context, keyPath: "\(propertyKeyPath):\(identifier)", value: newValue))
         }
     }
 }
