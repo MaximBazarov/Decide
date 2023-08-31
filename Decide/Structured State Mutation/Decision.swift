@@ -35,7 +35,9 @@ import Foundation
         self.environment = environment
     }
 
-    public subscript<State: AtomicState, Value>(_ propertyKeyPath: KeyPath<State, Property<Value>>) -> Value {
+    public subscript<State: AtomicState, Value>(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>
+    ) -> Value {
         get {
             environment.getValue(propertyKeyPath)
         }
@@ -67,8 +69,8 @@ import Foundation
 
     /// Set value at ``Property`` KeyPath on ``KeyedState``.
     func setValue<ID:Hashable, State: KeyedState<ID>, Value>(
-        _ newValue: Value,
         _ keyPath: KeyPath<State, Property<Value>>,
+        _ newValue: Value,
         at identifier: ID
     ) {
         transactions.insert(
