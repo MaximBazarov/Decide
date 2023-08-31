@@ -21,7 +21,7 @@ import Foundation
 final class Transaction: Hashable {
 
     /// We store the ``ValueContainer`` KeyPath for the transaction identity.
-    let keyPath: AnyKeyPath
+    let identity: AnyHashable
 
     /// called later when changes new value needs to be written in provided environment.
     let mutate: (ApplicationEnvironment) -> Void
@@ -33,9 +33,9 @@ final class Transaction: Hashable {
     /// - Parameters:
     ///   - containerKeyPath: ``ValueContainer`` KeyPath
     ///   - newValue: Value to be written.
-    @MainActor init<S: AtomicState, V>(
-        _ propertyKeyPath: KeyPath<S, Property<V>>,
-        newValue: V
+    @MainActor init<State: AtomicState, Value>(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>,
+        newValue: Value
     ) {
         // We don't want Transaction to inherit generic of V in ValueContainer<V>,
         // so instead of storing the container we pack it into closures that are
@@ -46,14 +46,33 @@ final class Transaction: Hashable {
         self.popObservers = { environment in
             environment.popObservers(propertyKeyPath)
         }
-        self.keyPath = propertyKeyPath
+        self.identity = propertyKeyPath
+    }
+
+    @MainActor init<ID:Hashable, State: KeyedState<ID>, Value>(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>,
+        newValue: Value,
+        at identifier: ID
+    ) {
+        self.mutate = { environment in
+            environment.setValue(newValue, propertyKeyPath, at: identifier)
+        }
+        self.popObservers = { environment in
+            environment.popObservers(propertyKeyPath, identifier)
+        }
+        self.identity = KeyedIdentity(keyPath: propertyKeyPath, id: identifier)
+    }
+
+    struct KeyedIdentity: Hashable {
+        let keyPath: AnyHashable
+        let id: AnyHashable
     }
 
     static func == (lhs: Transaction, rhs: Transaction) -> Bool {
-        lhs.keyPath == rhs.keyPath
+        lhs.identity == rhs.identity
     }
 
     func hash(into hasher: inout Hasher) {
-        hasher.combine(keyPath)
+        hasher.combine(identity)
     }
 }
