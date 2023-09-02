@@ -17,18 +17,18 @@ import SwiftUI
 
 /// **SwiftUI** property wrapper that provides read only access to the value by ``Property`` KeyPath on ``AtomicState``from the view environment.
 @propertyWrapper
-@MainActor public struct Observe<S: AtomicState, Value>: DynamicProperty {
+@MainActor public struct Observe<State: AtomicState, Value>: DynamicProperty {
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
     
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<State, Property<Value>>
     
-    public init(_ propertyKeyPath: KeyPath<S, Property<Value>>) {
+    public init(_ propertyKeyPath: KeyPath<State, Property<Value>>) {
         self.propertyKeyPath = propertyKeyPath
     }
     
     public init<P: PropertyModifier>(
-        _ propertyKeyPath: KeyPath<S, P>
+        _ propertyKeyPath: KeyPath<State, P>
     ) where P.Value == Value {
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
