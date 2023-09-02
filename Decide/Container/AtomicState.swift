@@ -40,17 +40,17 @@ extension ApplicationEnvironment {
     //===------------------------------------------------------------------===//
     // MARK: - Observability
     //===------------------------------------------------------------------===//
-    func notifyObservers<S: AtomicState, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>
+    func notifyObservers<State: AtomicState, Value>(
+        _ keyPath: KeyPath<State, Property<Value>>
     ) {
         let observers = popObservers(keyPath)
         observers.forEach { $0.notify() }
     }
 
-    func popObservers<S: AtomicState, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>
+    func popObservers<State: AtomicState, Value>(
+        _ keyPath: KeyPath<State, Property<Value>>
     ) -> Set<Observer> {
-        let storage: S = self[S.key()]
+        let storage: State = self[State.key()]
         return storage[keyPath: keyPath].valueContainer.observerStorage.popObservers()
     }
 
@@ -60,23 +60,23 @@ extension ApplicationEnvironment {
     //===------------------------------------------------------------------===//
 
     /// Subscribe ``Observer`` at ``Property`` KeyPath on ``AtomicState``.
-    func subscribe<S: AtomicState, Value>(
+    func subscribe<State: AtomicState, Value>(
         _ observer: Observer,
-        on keyPath: KeyPath<S, Property<Value>>
+        on keyPath: KeyPath<State, Property<Value>>
     ) {
-        let storage: S = self[S.key()]
+        let storage: State = self[State.key()]
         storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(observer)
     }
 
     /// Get value at ``Property`` KeyPath on ``AtomicState``.
-    func getValue<S: AtomicState, Value>(_ keyPath: KeyPath<S, Property<Value>>) -> Value {
-        let storage: S = self[S.key()]
+    func getValue<State: AtomicState, Value>(_ keyPath: KeyPath<State, Property<Value>>) -> Value {
+        let storage: State = self[State.key()]
         return storage[keyPath: keyPath].wrappedValue
     }
 
     /// Set value at ``Property`` KeyPath on ``AtomicState``.
-    func setValue<S: AtomicState, Value>(_ newValue: Value, _ keyPath: KeyPath<S, Property<Value>>) {
-        let storage: S = self[S.key()]
+    func setValue<State: AtomicState, Value>(_ newValue: Value, _ keyPath: KeyPath<State, Property<Value>>) {
+        let storage: State = self[State.key()]
         storage[keyPath: keyPath].wrappedValue = newValue
         notifyObservers(keyPath)
     }
