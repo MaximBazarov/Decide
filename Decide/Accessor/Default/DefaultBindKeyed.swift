@@ -16,15 +16,15 @@ import Foundation
 
 /// 
 @propertyWrapper
-@MainActor public struct DefaultBindKeyed<I: Hashable, S: KeyedState<I>, Value> {
+@MainActor public struct DefaultBindKeyed<Identifier: Hashable, State: KeyedState<Identifier>, Value> {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<S, Property<Value>>
-    private var valueBinding: KeyedValueBinding<I, S, Value>?
+    private let propertyKeyPath: KeyPath<State, Property<Value>>
+    private var valueBinding: KeyedValueBinding<Identifier, State, Value>?
     let context: Context
 
     public init(
-        _ keyPath: KeyPath<S, Mutable<Value>>,
+        _ keyPath: KeyPath<State, Mutable<Value>>,
         file: String = #fileID,
         line: Int = #line
     ) {
@@ -35,9 +35,9 @@ import Foundation
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
-        wrapped wrappedKeyPath: KeyPath<EnclosingObject, KeyedValueBinding<I, S, Value>>,
+        wrapped wrappedKeyPath: KeyPath<EnclosingObject, KeyedValueBinding<Identifier, State, Value>>,
         storage storageKeyPath: WritableKeyPath<EnclosingObject, Self>
-    ) -> KeyedValueBinding<I, S, Value> {
+    ) -> KeyedValueBinding<Identifier, State, Value> {
         get {
             var storage = instance[keyPath: storageKeyPath]
             let propertyKeyPath = storage.propertyKeyPath
@@ -60,7 +60,7 @@ import Foundation
     public var projectedValue: Self { self }
 
     @available(*, unavailable, message: "@DefaultBind can only be enclosed by EnvironmentObservingObject.")
-    public var wrappedValue: KeyedValueBinding<I, S, Value> {
+    public var wrappedValue: KeyedValueBinding<Identifier, State, Value> {
         get { fatalError() }
         set { fatalError() }
     }
