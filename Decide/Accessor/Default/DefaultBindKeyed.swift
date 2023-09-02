@@ -66,15 +66,15 @@ import Foundation
     }
 }
 
-@MainActor public struct KeyedValueBinding<I: Hashable, S: KeyedState<I>, Value> {
+@MainActor public struct KeyedValueBinding<Identifier: Hashable, State: KeyedState<Identifier>, Value> {
     unowned var environment: ApplicationEnvironment
 
     let observer: Observer
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<State, Property<Value>>
     let context: Context
 
     init(
-        bind propertyKeyPath: KeyPath<S, Property<Value>>,
+        bind propertyKeyPath: KeyPath<State, Property<Value>>,
         observer: Observer,
         environment: ApplicationEnvironment,
         context: Context
@@ -85,7 +85,7 @@ import Foundation
         self.environment = environment
     }
 
-    public subscript(_ identifier: I) -> Value {
+    public subscript(_ identifier: Identifier) -> Value {
         get {
             environment.subscribe(observer, on: propertyKeyPath, at: identifier)
             return environment.getValue(propertyKeyPath, at: identifier)
