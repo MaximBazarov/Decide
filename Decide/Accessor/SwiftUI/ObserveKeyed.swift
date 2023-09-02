@@ -31,9 +31,9 @@ import SwiftUI
         self.propertyKeyPath = propertyKeyPath
     }
 
-    public init<P: PropertyModifier>(
-        _ propertyKeyPath: KeyPath<State, P>
-    ) where P.Value == Value {
+    public init<WrappedProperty: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 
