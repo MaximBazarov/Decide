@@ -14,21 +14,21 @@
 import SwiftUI
 
 @propertyWrapper
-@MainActor public struct Instance<S: AtomicState, O> {
+@MainActor public struct Instance<State: AtomicState, Object> {
 
-    public typealias PropertyKeyPath = KeyPath<S, DefaultInstance<O>>
+    public typealias PropertyKeyPath = KeyPath<State, DefaultInstance<Object>>
 
     private let instanceKeyPath: PropertyKeyPath
 
-    public init(_ keyPath: KeyPath<S, DefaultInstance<O>>) {
+    public init(_ keyPath: KeyPath<State, DefaultInstance<Object>>) {
         self.instanceKeyPath = keyPath
     }
 
     public static subscript<EnclosingObject: EnvironmentManagedObject>(
         _enclosingInstance instance: EnclosingObject,
-        wrapped wrappedKeyPath: KeyPath<EnclosingObject, O>,
+        wrapped wrappedKeyPath: KeyPath<EnclosingObject, Object>,
         storage storageKeyPath: KeyPath<EnclosingObject, Self>
-    ) -> O {
+    ) -> Object {
         get {
             let storage = instance[keyPath: storageKeyPath]
             let instanceKeyPath = storage.instanceKeyPath
@@ -38,7 +38,7 @@ import SwiftUI
     }
 
     @available(*, unavailable, message: "@Instance must be enclosed in EnvironmentManagedObject.")
-    public var wrappedValue: O {
+    public var wrappedValue: Object {
         get { fatalError() }
     }
 }
