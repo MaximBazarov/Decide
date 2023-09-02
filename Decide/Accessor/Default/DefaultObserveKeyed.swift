@@ -32,9 +32,9 @@ import Foundation
         propertyKeyPath = keyPath
     }
 
-    public init<P: PropertyModifier>(
-        _ keyPath: KeyPath<State, P>
-    ) where P.Value == Value {
+    public init<WrappedProperty: PropertyModifier>(
+        _ keyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
         propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
