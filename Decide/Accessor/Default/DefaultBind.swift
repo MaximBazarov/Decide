@@ -14,16 +14,15 @@
 
 import Foundation
 
-/// 
 @propertyWrapper
-@MainActor public struct DefaultBind<S: AtomicState, Value> {
+@MainActor public struct DefaultBind<State: AtomicState, Value> {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<S, Property<Value>>
+    private let propertyKeyPath: KeyPath<State, Property<Value>>
     let context: Context
 
     public init(
-        _ keyPath: KeyPath<S, Mutable<Value>>,
+        _ keyPath: KeyPath<State, Mutable<Value>>,
         file: String = #fileID,
         line: Int = #line
     ) {
