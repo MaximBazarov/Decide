@@ -17,14 +17,18 @@ import SwiftUI
 
 /// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath on ``AtomicState``from the view environment.
 @propertyWrapper
-@MainActor public struct Bind<S: AtomicState, Value>: DynamicProperty {
+@MainActor public struct Bind<State: AtomicState, Value>: DynamicProperty {
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
     let context: Context
 
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<State, Property<Value>>
 
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, file: String = #fileID, line: Int = #line) {
+    public init(
+        _ propertyKeyPath: KeyPath<State, Mutable<Value>>,
+        file: String = #fileID,
+        line: Int = #line
+    ) {
         let context = Context(file: file, line: line)
         self.context = context
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
