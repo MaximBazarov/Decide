@@ -44,10 +44,10 @@ import SwiftUI
 }
 
 extension ApplicationEnvironment {
-    func defaultInstance<S: AtomicState, O>(
-        at keyPath: KeyPath<S, DefaultInstance<O>>
-    ) -> DefaultInstance<O> {
-        let storage: S = self[S.key()]
+    func defaultInstance<State: AtomicState, Object>(
+        at keyPath: KeyPath<State, DefaultInstance<Object>>
+    ) -> DefaultInstance<Object> {
+        let storage: State = self[State.key()]
         return storage[keyPath: keyPath]
     }
 }
