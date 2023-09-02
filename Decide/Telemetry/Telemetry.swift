@@ -27,7 +27,7 @@ final class Telemetry {
         self.observer = observer
     }
 
-    func log<E: TelemetryEvent>(event: E) {
+    func log<Event: TelemetryEvent>(event: Event) {
         guard event.logLevel.rawValue >= self.logLevel.rawValue
         else { return }
         observer.eventDidOccur(event)
@@ -35,7 +35,7 @@ final class Telemetry {
 }
 
 final class DoNotObserve: TelemetryObserver {
-    func eventDidOccur<E>(_ event: E) where E : TelemetryEvent {}
+    func eventDidOccur<Event>(_ event: Event) where Event : TelemetryEvent {}
 }
 extension Telemetry {
     static let noTelemetry = Telemetry(observer: DoNotObserve())
@@ -54,6 +54,6 @@ protocol TelemetryEvent {
 protocol TelemetryObserver {
     /// Called every time an event with debug level
     /// equal or greater than current occur.
-    func eventDidOccur<E: TelemetryEvent>(_ event: E)
+    func eventDidOccur<Event: TelemetryEvent>(_ event: Event)
 }
 
