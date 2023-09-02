@@ -35,9 +35,9 @@ extension ApplicationEnvironment {
     // MARK: - Observability
     //===------------------------------------------------------------------===//
    
-    func notifyObservers<I: Hashable, S: KeyedState<I>, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>,
-        _ identifier: I
+    func notifyObservers<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
+        _ keyPath: KeyPath<State, Property<Value>>,
+        _ identifier: Identifier
     ) {
         let observers = popObservers(keyPath, identifier)
         observers.forEach { $0.notify() }
@@ -56,31 +56,31 @@ extension ApplicationEnvironment {
     //===------------------------------------------------------------------===//
 
     /// Subscribe ``ObservableValue`` at ``Property`` KeyPath on ``KeyedState``.
-    func subscribe<I:Hashable, S: KeyedState<I>, Value>(
+    func subscribe<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ observer: Observer,
-        on keyPath: KeyPath<S, Property<Value>>,
-        at identifier: I
+        on keyPath: KeyPath<State, Property<Value>>,
+        at identifier: Identifier
     ) {
-        let storage: S = self[S.key(identifier)]
+        let storage: State = self[State.key(identifier)]
         storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(observer)
     }
 
     /// Get value at ``Property`` KeyPath on ``KeyedState``.
-    func getValue<I:Hashable, S: KeyedState<I>, Value>(
-        _ keyPath: KeyPath<S, Property<Value>>,
-        at identifier: I
+    func getValue<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
+        _ keyPath: KeyPath<State, Property<Value>>,
+        at identifier: Identifier
     ) -> Value {
-        let storage: S = self[S.key(identifier)]
+        let storage: State = self[State.key(identifier)]
         return storage[keyPath: keyPath].wrappedValue
     }
 
     /// Set value at ``Property`` KeyPath on ``KeyedState``.
-    func setValue<I:Hashable, S: KeyedState<I>, Value>(
+    func setValue<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ newValue: Value,
-        _ keyPath: KeyPath<S, Property<Value>>,
-        at identifier: I
+        _ keyPath: KeyPath<State, Property<Value>>,
+        at identifier: Identifier
     ) {
-        let storage: S = self[S.key(identifier)]
+        let storage: State = self[State.key(identifier)]
         storage[keyPath: keyPath].wrappedValue = newValue
         notifyObservers(keyPath, identifier)
     }
