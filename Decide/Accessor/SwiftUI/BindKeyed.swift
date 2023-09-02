@@ -16,22 +16,22 @@ import SwiftUI
 
 /// **SwiftUI** property wrapper that provides two-way access to the value by ``Property`` KeyPath and a Key on ``KeyedState`` from the view environment.
 @propertyWrapper
-@MainActor public struct BindKeyed<I: Hashable, S: KeyedState<I>, Value>: DynamicProperty {
+@MainActor public struct BindKeyed<Identifier: Hashable, State: KeyedState<Identifier>, Value>: DynamicProperty {
 
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
     let context: Context
 
 
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<State, Property<Value>>
 
-    public init(_ propertyKeyPath: KeyPath<S, Mutable<Value>>, file: String = #fileID, line: Int = #line) {
+    public init(_ propertyKeyPath: KeyPath<State, Mutable<Value>>, file: String = #fileID, line: Int = #line) {
         let context = Context(file: file, line: line)
         self.context = context
         self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
     }
 
-    public subscript(_ identifier: I) -> Binding<Value> {
+    public subscript(_ identifier: Identifier) -> Binding<Value> {
         Binding<Value>(
             get: {
                 environment.subscribe(
@@ -47,7 +47,7 @@ import SwiftUI
         )
     }
 
-    public subscript(_ identifier: I) -> Value {
+    public subscript(_ identifier: Identifier) -> Value {
         get {
             environment.subscribe(Observer(observer), on: propertyKeyPath, at: identifier)
             return environment.getValue(propertyKeyPath, at: identifier)
