@@ -44,9 +44,9 @@ import Foundation
         return Telemetry(observer: OSLogTelemetryObserver()) // .noTelemetry
     }()
 
-    subscript<S: ValueContainerStorage>(_ key: Key) -> S {
-        if let state = storage[key] as? S { return state }
-        let newValue = S.init()
+    subscript<Storage: ValueContainerStorage>(_ key: Key) -> Storage {
+        if let state = storage[key] as? Storage { return state }
+        let newValue = Storage.init()
         storage[key] = newValue
         return newValue
     }
