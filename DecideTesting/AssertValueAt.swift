@@ -21,9 +21,9 @@ public extension ApplicationEnvironment {
     //===------------------------------------------------------------------===//
 
     /// Asserts that value of given container is equal to given value.
-    func AssertValueIn<V: Equatable>(
-        _ valueA: V,
-        isEqual valueB: V,
+    func AssertValueIn<Value: Equatable>(
+        _ valueA: Value,
+        isEqual valueB: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {
@@ -37,46 +37,46 @@ public extension ApplicationEnvironment {
 
     /// Asserts that value at given KeyPath is equal to given value.
     func AssertValueAt<
-        P: PropertyModifier,
-        V: Equatable,
-        S: AtomicState
-    > (
-        _ keyPath: KeyPath<S, P>,
-        isEqual value: V,
+        WrappedProperty: PropertyModifier,
+        Value: Equatable,
+        State: AtomicState
+    >(
+        _ keyPath: KeyPath<State, WrappedProperty>,
+        isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
-    ) where P.Value == V {
+    ) where WrappedProperty.Value == Value {
         let containerValue = getValue(keyPath.appending(path: \.wrappedValue))
         AssertValueIn(containerValue, isEqual: value, file: file, line: line)
     }
 
     /// Asserts that value at given KeyPath is equal to given value.
     func AssertValueAt<
-        V: Equatable,
-        S: AtomicState
+        Value: Equatable,
+        State: AtomicState
     >(
-        _ keyPath: KeyPath<S, Property<V>>,
-        isEqual value: V,
+        _ keyPath: KeyPath<State, Property<Value>>,
+        isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {
         let containerValue = getValue(keyPath)
         AssertValueIn(containerValue, isEqual: value, file: file, line: line)
     }
-    
+
     //===------------------------------------------------------------------===//
     // MARK: - Keyed
     //===------------------------------------------------------------------===//
 
     /// Asserts that value of given container and Identifier is equal to given value.
     func AssertValueIn<
-        V: Equatable,
-        I: Hashable,
-        S: KeyedState<I>
+        Value: Equatable,
+        Identifier: Hashable,
+        State: KeyedState<Identifier>
     >(
-        _ valueA: V,
-        identifier: I,
-        isEqual valueB: V,
+        _ valueA: Value,
+        identifier: Identifier,
+        isEqual valueB: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {
@@ -89,30 +89,30 @@ public extension ApplicationEnvironment {
 
     /// Asserts that value at given KeyPath and Identifier is equal to given value.
     func AssertValueAt<
-        P: PropertyModifier,
-        V: Equatable,
-        I: Hashable,
-        S: KeyedState<I>
+        WrappedProperty: PropertyModifier,
+        Value: Equatable,
+        Identifier: Hashable,
+        State: KeyedState<Identifier>
     >(
-        _ keyPath: KeyPath<S, P>,
-        at identifier: I,
-        isEqual value: V,
+        _ keyPath: KeyPath<State, WrappedProperty>,
+        at identifier: Identifier,
+        isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
-    ) where P.Value == V {
+    ) where WrappedProperty.Value == Value {
         let containerValue = getValue(keyPath.appending(path: \.wrappedValue), at: identifier)
         AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
     }
 
     /// Asserts that value at given KeyPath and Identifier is equal to given value.
     func AssertValueAt<
-        V: Equatable,
-        I: Hashable,
-        S: KeyedState<I>
+        Value: Equatable,
+        Identifier: Hashable,
+        State: KeyedState<Identifier>
     >(
-        _ keyPath: KeyPath<S, Property<V>>,
-        at identifier: I,
-        isEqual value: V,
+        _ keyPath: KeyPath<State, Property<Value>>,
+        at identifier: Identifier,
+        isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {

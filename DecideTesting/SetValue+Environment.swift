@@ -17,16 +17,19 @@ import OSLog
 
 public extension ApplicationEnvironment {
     /// Set value at ``Mutable`` KeyPath on ``AtomicState``.
-    func setValue<S: AtomicState, Value>(_ newValue: Value, _ keyPath: KeyPath<S, Mutable<Value>>) {
+    func setValue<State: AtomicState, Value>(
+        _ newValue: Value,
+        _ keyPath: KeyPath<State, Mutable<Value>>
+    ) {
         setValue(newValue, keyPath.appending(path: \.wrappedValue))
         telemetry.log(event: TestingMutation(context: .init(), keyPath: "\(keyPath)", value: newValue))
     }
 
     /// Set value at ``Mutable`` KeyPath on ``AtomicState``.
-    func setValue<I:Hashable, S: KeyedState<I>, Value>(
+    func setValue<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ newValue: Value,
-        _ keyPath: KeyPath<S, Mutable<Value>>,
-        at identifier: I
+        _ keyPath: KeyPath<State, Mutable<Value>>,
+        at identifier: Identifier
     ) {
         setValue(newValue, keyPath.appending(path: \.wrappedValue), at: identifier)
         telemetry.log(event: TestingMutation(context: .init(), keyPath: "\(keyPath):\(identifier)", value: newValue))
@@ -34,16 +37,16 @@ public extension ApplicationEnvironment {
 }
 
 
-final class TestingMutation<V>: TelemetryEvent {
+final class TestingMutation<Value>: TelemetryEvent {
     let category: String = "Testing: State Mutation"
     let name: String = "Property updated:"
     let logLevel: OSLogType = .debug
     let context: Decide.Context
 
     let keyPath: String
-    let value: V
+    let value: Value
 
-    init(context: Decide.Context, keyPath: String, value: V) {
+    init(context: Decide.Context, keyPath: String, value: Value) {
         self.keyPath = keyPath
         self.context = context
         self.value = value

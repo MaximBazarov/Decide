@@ -14,16 +14,16 @@
 
 import OSLog
 
-final class UnstructuredMutation<V>: TelemetryEvent {
+final class UnstructuredMutation<Value>: TelemetryEvent {
     let category: String = "Unstructured State Mutation"
     let name: String = "Property updated:"
     let logLevel: OSLogType = .debug
     let context: Decide.Context
 
     let keyPath: String
-    let value: V
+    let value: Value
 
-    init(context: Decide.Context, keyPath: String, value: V) {
+    init(context: Decide.Context, keyPath: String, value: Value) {
         self.keyPath = keyPath
         self.context = context
         self.value = value

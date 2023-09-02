@@ -49,10 +49,10 @@ final class Transaction: Hashable {
         self.identity = propertyKeyPath
     }
 
-    @MainActor init<ID:Hashable, State: KeyedState<ID>, Value>(
+    @MainActor init<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ propertyKeyPath: KeyPath<State, Property<Value>>,
         newValue: Value,
-        at identifier: ID
+        at identifier: Identifier
     ) {
         self.mutate = { environment in
             environment.setValue(newValue, propertyKeyPath, at: identifier)

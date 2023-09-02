@@ -28,30 +28,30 @@ public protocol Effect: Actor {
         self.environment = environment
     }
 
-    public subscript<S: AtomicState, V>(_ propertyKeyPath: KeyPath<S, Property<V>>) -> V {
+    public subscript<State: AtomicState, Value>(_ propertyKeyPath: KeyPath<State, Property<Value>>) -> Value {
         get { environment.getValue(propertyKeyPath) }
     }
 
-    public subscript<I, S, V>(
-        _ propertyKeyPath: KeyPath<S, Property<V>>,
-        at identifier: I
-    ) -> V
-    where I: Hashable, S: KeyedState<I>
+    public subscript<Identifier, State, Value>(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>,
+        at identifier: Identifier
+    ) -> Value
+    where Identifier: Hashable, State: KeyedState<Identifier>
     {
         get { environment.getValue(propertyKeyPath, at: identifier) }
     }
 
-    public subscript<S: AtomicState, V>(_ propertyKeyPath: KeyPath<S, Mutable<V>>) -> V {
+    public subscript<State: AtomicState, Value>(_ propertyKeyPath: KeyPath<State, Mutable<Value>>) -> Value {
         get {
             environment.getValue(propertyKeyPath.appending(path: \.wrappedValue))
         }
     }
 
-    public subscript<I, S, V>(
-        _ propertyKeyPath: KeyPath<S, Mutable<V>>,
-        at identifier: I
-    ) -> V
-    where I: Hashable, S: KeyedState<I>
+    public subscript<Identifier, State, Value>(
+        _ propertyKeyPath: KeyPath<State, Mutable<Value>>,
+        at identifier: Identifier
+    ) -> Value
+    where Identifier: Hashable, State: KeyedState<Identifier>
     {
         get {
             environment.getValue(propertyKeyPath.appending(path: \.wrappedValue), at: identifier)
@@ -63,14 +63,14 @@ public protocol Effect: Actor {
         await environment.makeAwaiting(decision: decision)
     }
 
-    @MainActor public func instance<S: AtomicState, O>(_ keyPath: KeyPath<S, DefaultInstance<O>>) -> O {
-        let obj = environment.defaultInstance(at: keyPath).wrappedValue
-        return obj
+    @MainActor public func instance<State: AtomicState, Object>(_ keyPath: KeyPath<State, DefaultInstance<Object>>) -> Object {
+        let object = environment.defaultInstance(at: keyPath).wrappedValue
+        return object
     }
 
-    @MainActor public func instance<S: AtomicState, O: EnvironmentManagedObject>(_ keyPath: KeyPath<S, DefaultInstance<O>>) -> O {
-        let obj = environment.defaultInstance(at: keyPath).wrappedValue
-        obj.environment = self.environment
-        return obj
+    @MainActor public func instance<State: AtomicState, Object: EnvironmentManagedObject>(_ keyPath: KeyPath<State, DefaultInstance<Object>>) -> Object {
+        let object = environment.defaultInstance(at: keyPath).wrappedValue
+        object.environment = self.environment
+        return object
     }
 }

@@ -14,7 +14,10 @@
 
 import Decide
 
-@MainActor public func WithEnvironment<T>(_ environment: ApplicationEnvironment, object: T) -> T {
+@MainActor public func WithEnvironment<Object>(
+    _ environment: ApplicationEnvironment,
+    object: Object
+) -> Object {
     Mirror(reflecting: object).replaceEnvironment(with: environment)
     return object
 }
@@ -27,12 +30,12 @@ private extension Mirror {
     }
 
     @MainActor func replaceEnvironment(on child: inout Mirror.Child, with newEnvironment: ApplicationEnvironment) {
-        if let obj = child.value as? DefaultEnvironment {
-            obj.wrappedValue = newEnvironment
+        if let object = child.value as? DefaultEnvironment {
+            object.wrappedValue = newEnvironment
             return
         }
 
-        let m = Mirror(reflecting: child.value)
-        m.replaceEnvironment(with: newEnvironment)
+        let mirror = Mirror(reflecting: child.value)
+        mirror.replaceEnvironment(with: newEnvironment)
     }
 }

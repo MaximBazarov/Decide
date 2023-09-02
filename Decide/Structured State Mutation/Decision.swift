@@ -46,9 +46,9 @@ import Foundation
         }
     }
 
-    public subscript<ID:Hashable, State: KeyedState<ID>, Value>(
+    public subscript<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ propertyKeyPath: KeyPath<State, Property<Value>>,
-        at identifier: ID
+        at identifier: Identifier
     ) -> Value {
         get {
             environment.getValue(propertyKeyPath, at: identifier)
@@ -68,17 +68,17 @@ import Foundation
     }
 
     /// Set value at ``Property`` KeyPath on ``KeyedState``.
-    func setValue<ID:Hashable, State: KeyedState<ID>, Value>(
+    func setValue<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
         _ keyPath: KeyPath<State, Property<Value>>,
         _ newValue: Value,
-        at identifier: ID
+        at identifier: Identifier
     ) {
         transactions.insert(
             Transaction(keyPath, newValue: newValue, at: identifier)
         )
     }
 
-    public func perform<E: Effect>(effect: E) {
+    public func perform<SideEffect: Effect>(effect: SideEffect) {
         effects.append(effect)
     }
 }

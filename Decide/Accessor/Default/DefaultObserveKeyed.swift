@@ -17,32 +17,32 @@ import Foundation
 /// 
 @propertyWrapper
 @MainActor public struct DefaultObserveKeyed<
-    I: Hashable,
-    S: KeyedState<I>,
+    Identifier: Hashable,
+    State: KeyedState<Identifier>,
     Value
 > {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<S, Property<Value>>
-    private var valueObserve: KeyedValueObserve<I, S, Value>?
+    private let propertyKeyPath: KeyPath<State, Property<Value>>
+    private var valueObserve: KeyedValueObserve<Identifier, State, Value>?
 
     public init(
-        _ keyPath: KeyPath<S, Property<Value>>
+        _ keyPath: KeyPath<State, Property<Value>>
     ) {
         propertyKeyPath = keyPath
     }
 
-    public init<P: PropertyModifier>(
-        _ keyPath: KeyPath<S, P>
-    ) where P.Value == Value {
+    public init<WrappedProperty: PropertyModifier>(
+        _ keyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
         propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
-        wrapped wrappedKeyPath: KeyPath<EnclosingObject, KeyedValueObserve<I, S, Value>>,
+        wrapped wrappedKeyPath: KeyPath<EnclosingObject, KeyedValueObserve<Identifier, State, Value>>,
         storage storageKeyPath: WritableKeyPath<EnclosingObject, Self>
-    ) -> KeyedValueObserve<I, S, Value> {
+    ) -> KeyedValueObserve<Identifier, State, Value> {
         get {
             var storage = instance[keyPath: storageKeyPath]
             let propertyKeyPath = storage.propertyKeyPath
@@ -50,7 +50,7 @@ import Foundation
             storage.environment = environment
             let observer = Observer(instance)
             if storage.valueObserve == nil {
-                storage.valueObserve = KeyedValueObserve<I, S, Value>(
+                storage.valueObserve = KeyedValueObserve<Identifier, State, Value>(
                     bind: propertyKeyPath,
                     observer: observer,
                     environment: environment
@@ -64,20 +64,20 @@ import Foundation
     public var projectedValue: Self { self }
 
     @available(*, unavailable, message: "@DefaultBind can only be enclosed by EnvironmentObservingObject.")
-    public var wrappedValue: KeyedValueObserve<I, S, Value> {
+    public var wrappedValue: KeyedValueObserve<Identifier, State, Value> {
         get { fatalError() }
         set { fatalError() }
     }
 }
 
-@MainActor public struct KeyedValueObserve<I: Hashable, S: KeyedState<I>, Value> {
+@MainActor public struct KeyedValueObserve<Identifier: Hashable, State: KeyedState<Identifier>, Value> {
     unowned var environment: ApplicationEnvironment
 
     let observer: Observer
-    let propertyKeyPath: KeyPath<S, Property<Value>>
+    let propertyKeyPath: KeyPath<State, Property<Value>>
 
     init(
-        bind propertyKeyPath: KeyPath<S, Property<Value>>,
+        bind propertyKeyPath: KeyPath<State, Property<Value>>,
         observer: Observer,
         environment: ApplicationEnvironment
     ) {
@@ -86,7 +86,7 @@ import Foundation
         self.environment = environment
     }
 
-    public subscript(_ identifier: I) -> Value {
+    public subscript(_ identifier: Identifier) -> Value {
         get {
             environment.subscribe(observer, on: propertyKeyPath, at: identifier)
             return environment.getValue(propertyKeyPath, at: identifier)

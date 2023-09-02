@@ -16,8 +16,8 @@ import Foundation
 
 /// Managed by ``ApplicationEnvironment`` storage for objects, unlike ``Property`` it doesn't support mutation nor observation.
 @propertyWrapper
-@MainActor public final class DefaultInstance<O> {
-    public var wrappedValue: O {
+@MainActor public final class DefaultInstance<Object> {
+    public var wrappedValue: Object {
         get {
             if let storage { return storage }
             let newValue = defaultValue()
@@ -26,19 +26,19 @@ import Foundation
         }
     }
     
-    public var projectedValue: DefaultInstance<O> {
+    public var projectedValue: DefaultInstance<Object> {
         self
     }
     
-    public init(wrappedValue: @autoclosure @escaping () -> O, file: StaticString = #fileID, line: UInt = #line) {
+    public init(wrappedValue: @autoclosure @escaping () -> Object, file: StaticString = #fileID, line: UInt = #line) {
         self.defaultValue = wrappedValue
         self.file = file.description
         self.line = line
     }
     
     // MARK: - Value Storage
-    private var storage: O?
-    private let defaultValue: () -> O
+    private var storage: Object?
+    private let defaultValue: () -> Object
     
     // MARK: - Tracing
     let file: String

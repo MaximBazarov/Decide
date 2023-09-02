@@ -17,18 +17,18 @@ import Foundation
 
 ///
 @propertyWrapper
-@MainActor public struct DefaultObserve<S: AtomicState, Value> {
+@MainActor public struct DefaultObserve<State: AtomicState, Value> {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<S, Property<Value>>
+    private let propertyKeyPath: KeyPath<State, Property<Value>>
 
-    public init(_ keyPath: KeyPath<S, Property<Value>>) {
+    public init(_ keyPath: KeyPath<State, Property<Value>>) {
         self.propertyKeyPath = keyPath
     }
 
-    public init<P: PropertyModifier>(
-        _ keyPath: KeyPath<S, P>
-    ) where P.Value == Value {
+    public init<WrappedProperty: PropertyModifier>(
+        _ keyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
         propertyKeyPath = keyPath.appending(path: \.wrappedValue)
     }
 

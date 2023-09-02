@@ -41,7 +41,7 @@ final class OSLogTelemetryObserver: TelemetryObserver {
         return false
     }()
 
-    func eventDidOccur<E>(_ event: E) where E : TelemetryEvent {
+    func eventDidOccur<Event>(_ event: Event) where Event: TelemetryEvent {
         let logger = Logger(subsystem: Self.subsystem, category: event.category)
         if Self.unsafeTracingEnabled {
             unsafeTrace(event: event, logger: logger)
@@ -51,7 +51,7 @@ final class OSLogTelemetryObserver: TelemetryObserver {
 
     }
 
-    func trace<E>(event: E, logger: Logger) where E : TelemetryEvent {
+    func trace<Event>(event: Event, logger: Logger) where Event: TelemetryEvent {
         switch event.logLevel {
         case .debug:
             logger.debug("\(event.name): \(event.message(), privacy: .sensitive)\n context: \(event.context.debugDescription)")
@@ -66,7 +66,7 @@ final class OSLogTelemetryObserver: TelemetryObserver {
         }
     }
 
-    func unsafeTrace<E>(event: E, logger: Logger) where E : TelemetryEvent {
+    func unsafeTrace<Event>(event: Event, logger: Logger) where Event: TelemetryEvent {
         switch event.logLevel {
         case .debug:
             logger.debug("\(event.name): \(event.message(), privacy: .sensitive)\n context: \(event.context.debugDescription)")
