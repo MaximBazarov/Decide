@@ -119,5 +119,39 @@ public extension ApplicationEnvironment {
         let containerValue = getValue(keyPath, at: identifier)
         AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
     }
+
+    //===------------------------------------------------------------------===//
+    // MARK: - Computed
+    //===------------------------------------------------------------------===//
+
+    func AssertValueAt<
+        Value: Equatable,
+        State: AtomicState
+    > (
+        _ keyPath: KeyPath<State, Computed<Value>>,
+        isEqual value: Value,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) {
+        let containerValue: Value = getValue(keyPath)
+        AssertValueIn(containerValue, isEqual: value, file: file, line: line)
+    }
+
+    /// Asserts that value at given KeyPath is equal to given value.
+    func AssertValueAt<
+        Identifier: Hashable,
+        Value: Equatable,
+        State: KeyedState<Identifier>
+    > (
+        _ keyPath: KeyPath<State, ComputedKeyed<Identifier, Value>>,
+        at identifier: Identifier,
+        isEqual value: Value,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) {
+        let containerValue: Value = getValue(keyPath, at: identifier)
+        AssertValueIn(containerValue, isEqual: value, file: file, line: line)
+    }
+
 }
 

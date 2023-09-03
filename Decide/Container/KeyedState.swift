@@ -66,7 +66,11 @@ extension ApplicationEnvironment {
     }
 
     /// Get value at ``Property`` KeyPath on ``KeyedState``.
-    func getValue<Identifier: Hashable, State: KeyedState<Identifier>, Value>(
+    func getValue<
+        Identifier: Hashable,
+        State: KeyedState<Identifier>,
+        Value
+    >(
         _ keyPath: KeyPath<State, Property<Value>>,
         at identifier: Identifier
     ) -> Value {
