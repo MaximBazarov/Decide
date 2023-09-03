@@ -48,7 +48,7 @@ extension ApplicationEnvironment {
         _ identifier: I
     ) -> Set<Observer> {
         let storage: S = self[S.key(identifier)]
-        return storage[keyPath: keyPath].valueContainer.observerStorage.popObservers()
+        return storage[keyPath: keyPath].observerStorage.popObservers()
     }
 
     //===------------------------------------------------------------------===//
@@ -62,7 +62,7 @@ extension ApplicationEnvironment {
         at identifier: Identifier
     ) {
         let storage: State = self[State.key(identifier)]
-        storage[keyPath: keyPath].projectedValue.valueContainer.observerStorage.subscribe(observer)
+        storage[keyPath: keyPath].projectedValue.observerStorage.subscribe(observer)
     }
 
     /// Get value at ``Property`` KeyPath on ``KeyedState``.

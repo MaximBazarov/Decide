@@ -18,19 +18,22 @@
 @propertyWrapper
 @MainActor public final class Property<Value> {
 
-    private(set) var valueContainer: ValueContainer<Value>
+    var value: Value?
+    var observerStorage = ObserverStorage()
+    var persistencyStrategy: PersistencyStrategy<Value>?
+
     let defaultValue: () -> Value
 
     /// Default Value
     public var wrappedValue: Value {
         get {
-            if let value = valueContainer.value { return value }
+            if let value { return value }
             let newValue = defaultValue()
-            valueContainer.value = newValue
+            value = newValue
             return newValue
         }
         set {
-            valueContainer.value = newValue
+            value = newValue
         }
     }
 
@@ -39,7 +42,6 @@
     }
 
     public init(wrappedValue: @autoclosure @escaping () -> Value, file: StaticString = #fileID, line: UInt = #line) {
-        self.valueContainer = ValueContainer()
         self.defaultValue = wrappedValue
         self.file = file.description
         self.line = line
