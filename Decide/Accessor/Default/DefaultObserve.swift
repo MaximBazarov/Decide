@@ -20,17 +20,7 @@ import Foundation
 @MainActor public struct DefaultObserve<State: AtomicState, Value> {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<State, Property<Value>>
-
-    public init(_ keyPath: KeyPath<State, Property<Value>>) {
-        self.propertyKeyPath = keyPath
-    }
-
-    public init<WrappedProperty: PropertyModifier>(
-        _ keyPath: KeyPath<State, WrappedProperty>
-    ) where WrappedProperty.Value == Value {
-        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
-    }
+    let containerKeyPath: ValueContainerKeyPath<State, Value, AnyHashable>
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
@@ -39,11 +29,16 @@ import Foundation
     ) -> Value {
         get {
             let storage = instance[keyPath: storageKeyPath]
-            let propertyKeyPath = storage.propertyKeyPath
+            let containerKeyPath = storage.containerKeyPath
             let environment = instance.environment
             storage.environment = environment
-            environment.subscribe(Observer(instance), on: propertyKeyPath)
-            return environment.getValue(propertyKeyPath)
+            switch containerKeyPath {
+            case .property(let keyPath):
+                environment.subscribe(Observer(instance), on: keyPath)
+                return environment.getValue(keyPath)
+            case .computed(let keyPath):
+                fatalError()
+            }
         }
         set {
             /// https://github.com/apple/swift/issues/67561

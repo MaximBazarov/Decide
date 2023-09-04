@@ -85,63 +85,66 @@ import Decide
     // MARK: - Observation
     //===------------------------------------------------------------------===//
 
-//    class Tracker: EnvironmentObservingObject {
-//        @DefaultEnvironment var environment
-//        @DefaultObserve(\State.$str) var str
-//        @DefaultObserve(\State.$strMutable) var strMutableObserve
-//        @DefaultBind(\State.$strMutable) var strMutable
-//
-//        var updatesCount: UInt = 0
-//
-//        func didLoad() {
-//            // in order to subscribe to the properties this object is reading we need to call reading.
-//            environmentDidUpdate()
-//            updatesCount -= 1
-//        }
-//
-//        func environmentDidUpdate() {
-//            // we need to read property in order to subscribe.
-//            _ = str
-//            _ = strMutable
-//            _ = strMutableObserve
-//            updatesCount += 1
-//        }
-//    }
+    class Tracker: EnvironmentObservingObject {
+        @DefaultEnvironment var environment
 
-//    func test_Observation() async {
-//        let env = ApplicationEnvironment()
-//        let sut = WithEnvironment(env, object: Tracker())
-//
-//        sut.didLoad()
-//
-//        let newValue = "\(#function)-modified"
-//        env.setValue(newValue, \State.$str)
-//        env.setValue(newValue, \State.$strMutable)
-//        env.setValue(newValue, \State.$strMutable)
-//
-//        XCTAssertEqual(sut.updatesCount, 3)
-//        XCTAssertEqual(sut.str, newValue)
-//        XCTAssertEqual(sut.strMutableObserve, newValue)
-//        XCTAssertEqual(sut.strMutable, newValue)
-//    }
-//
-//    func test_Observation_BindSet() async {
-//        let env = ApplicationEnvironment()
-//        let sut = WithEnvironment(env, object: Tracker())
-//        let sut2 = WithEnvironment(env, object: Tracker())
-//
-//        sut.didLoad()
-//        sut2.didLoad()
-//
-//        let newValue = "\(#function)-modified"
-//
-//        sut2.strMutable = newValue
-//        env.setValue(newValue, \State.$str)
-//
-//        XCTAssertEqual(sut.updatesCount, 2)
-//        XCTAssertEqual(sut.strMutable, newValue)
-//        XCTAssertEqual(sut.str, newValue)
-//        XCTAssertEqual(sut.strMutableObserve, newValue)
-//    }
+        @DefaultBind(\State.$a) var a
+        @DefaultObserve(\State.$b) var b
+        @DefaultObserve(\State.$c) var c
+        @DefaultObserve(\State.$comp) var comp
+
+
+        var updatesCount: UInt = 0
+
+        func didLoad() {
+            // in order to subscribe to the properties this object is reading we need to call reading.
+            environmentDidUpdate()
+            updatesCount -= 1
+        }
+
+        func environmentDidUpdate() {
+            // we need to read property in order to subscribe.
+            _ = str
+            _ = strMutable
+            _ = strMutableObserve
+            updatesCount += 1
+        }
+    }
+
+    func test_Observation() async {
+        let env = ApplicationEnvironment()
+        let sut = WithEnvironment(env, object: Tracker())
+
+        sut.didLoad()
+
+        let newValue = "\(#function)-modified"
+        env.setValue(newValue, \State.$str)
+        env.setValue(newValue, \State.$strMutable)
+        env.setValue(newValue, \State.$strMutable)
+
+        XCTAssertEqual(sut.updatesCount, 3)
+        XCTAssertEqual(sut.str, newValue)
+        XCTAssertEqual(sut.strMutableObserve, newValue)
+        XCTAssertEqual(sut.strMutable, newValue)
+    }
+
+    func test_Observation_BindSet() async {
+        let env = ApplicationEnvironment()
+        let sut = WithEnvironment(env, object: Tracker())
+        let sut2 = WithEnvironment(env, object: Tracker())
+
+        sut.didLoad()
+        sut2.didLoad()
+
+        let newValue = "\(#function)-modified"
+
+        sut2.strMutable = newValue
+        env.setValue(newValue, \State.$str)
+
+        XCTAssertEqual(sut.updatesCount, 2)
+        XCTAssertEqual(sut.strMutable, newValue)
+        XCTAssertEqual(sut.str, newValue)
+        XCTAssertEqual(sut.strMutableObserve, newValue)
+    }
 
 }

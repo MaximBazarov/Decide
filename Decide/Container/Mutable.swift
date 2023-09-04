@@ -21,3 +21,30 @@
         self.wrappedValue = wrappedValue
     }
 }
+
+
+public extension Bind {
+
+    /// Two way binding to the given ``Mutable`` property KeyPath
+    init(
+        _ keyPath: KeyPath<State, Mutable<Value>>,
+        file: String = #fileID,
+        line: Int = #line
+    ) {
+        self.context = Context(file: file, line: line)
+        self.propertyKeyPath = keyPath.appending(path: \.wrappedValue)
+    }
+}
+
+extension BindKeyed {
+    /// Two way binding to the given ``Mutable`` in ``KeyedState`` property KeyPath
+    public init(
+        _ propertyKeyPath: KeyPath<State, Mutable<Value>>,
+        file: String = #fileID,
+        line: Int = #line
+    ) {
+        let context = Context(file: file, line: line)
+        self.context = context
+        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
+    }
+}

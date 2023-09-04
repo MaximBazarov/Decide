@@ -23,20 +23,8 @@ import Foundation
 > {
     @DefaultEnvironment var environment
 
-    private let propertyKeyPath: KeyPath<State, Property<Value>>
+    let containerKeyPath: ValueContainerKeyPath<State, Value>
     private var valueObserve: KeyedValueObserve<Identifier, State, Value>?
-
-    public init(
-        _ keyPath: KeyPath<State, Property<Value>>
-    ) {
-        propertyKeyPath = keyPath
-    }
-
-    public init<WrappedProperty: PropertyModifier>(
-        _ keyPath: KeyPath<State, WrappedProperty>
-    ) where WrappedProperty.Value == Value {
-        propertyKeyPath = keyPath.appending(path: \.wrappedValue)
-    }
 
     public static subscript<EnclosingObject: EnvironmentObservingObject>(
         _enclosingInstance instance: EnclosingObject,
@@ -45,13 +33,13 @@ import Foundation
     ) -> KeyedValueObserve<Identifier, State, Value> {
         get {
             var storage = instance[keyPath: storageKeyPath]
-            let propertyKeyPath = storage.propertyKeyPath
+            let containerKeyPath = storage.containerKeyPath
             let environment = instance.environment
             storage.environment = environment
             let observer = Observer(instance)
             if storage.valueObserve == nil {
                 storage.valueObserve = KeyedValueObserve<Identifier, State, Value>(
-                    bind: propertyKeyPath,
+                    bind: containerKeyPath,
                     observer: observer,
                     environment: environment
                 )
@@ -74,22 +62,27 @@ import Foundation
     unowned var environment: ApplicationEnvironment
 
     let observer: Observer
-    let propertyKeyPath: KeyPath<State, Property<Value>>
+    let containerKeyPath: ValueContainerKeyPath<State, Value>
 
     init(
-        bind propertyKeyPath: KeyPath<State, Property<Value>>,
+        bind containerKeyPath: ValueContainerKeyPath<State, Value>,
         observer: Observer,
         environment: ApplicationEnvironment
     ) {
-        self.propertyKeyPath = propertyKeyPath
+        self.containerKeyPath = containerKeyPath
         self.observer = observer
         self.environment = environment
     }
 
     public subscript(_ identifier: Identifier) -> Value {
         get {
-            environment.subscribe(observer, on: propertyKeyPath, at: identifier)
-            return environment.getValue(propertyKeyPath, at: identifier)
+            switch containerKeyPath {
+            case .property(let keyPath):
+                environment.subscribe(observer, on: keyPath, at: identifier)
+                return environment.getValue(keyPath, at: identifier)
+            case .computed(let keyPath):
+                fatalError()
+            }
         }
     }
 }

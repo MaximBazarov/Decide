@@ -25,22 +25,18 @@ import SwiftUI
     @SwiftUI.Environment(\.stateEnvironment) var environment
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
 
-    let propertyKeyPath: KeyPath<State, Property<Value>>
-
-    public init(_ propertyKeyPath: KeyPath<State, Property<Value>>) {
-        self.propertyKeyPath = propertyKeyPath
-    }
-
-    public init<WrappedProperty: PropertyModifier>(
-        _ propertyKeyPath: KeyPath<State, WrappedProperty>
-    ) where WrappedProperty.Value == Value {
-        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
-    }
+    let containerKeyPath: ValueContainerKeyPath<State, Value>
 
     public subscript(_ identifier: Identifier) -> Value {
         get {
-            environment.subscribe(Observer(observer), on: propertyKeyPath, at: identifier)
-            return environment.getValue(propertyKeyPath, at: identifier)
+            switch containerKeyPath {
+            case .property(let keyPath):
+                environment.subscribe(Observer(observer), on: keyPath, at: identifier)
+                return environment.getValue(keyPath, at: identifier)
+            case .computed(let keyPath):
+                fatalError()
+            }
+
         }
     }
 

@@ -68,6 +68,9 @@ import Foundation
     let line: UInt
 }
 
+//===----------------------------------------------------------------------===//
+// MARK: - Environment
+//===----------------------------------------------------------------------===//
 
 extension ApplicationEnvironment {
     func getValue<
@@ -115,6 +118,10 @@ extension ApplicationEnvironment {
     }
 
 }
+
+//===----------------------------------------------------------------------===//
+// MARK: - Computation Environment
+//===----------------------------------------------------------------------===//
 
 @MainActor public final class ComputationEnvironment {
 
@@ -170,3 +177,44 @@ extension ApplicationEnvironment {
         }
     }
 }
+
+//===----------------------------------------------------------------------===//
+// MARK: - Accessors
+//===----------------------------------------------------------------------===//
+
+public extension Observe {
+
+    /// Observe reading ``Computed`` value.
+    init(
+        _ keyPath: KeyPath<State, Computed<Value>>
+    ) {
+        self.containerKeyPath = .computed(keyPath)
+    }
+}
+
+public extension ObserveKeyed {
+    /// Observe reading ``Computed`` value.
+    init(
+        _ keyPath: KeyPath<State, Computed<Value>>
+    ) {
+        self.containerKeyPath = .computed(keyPath)
+    }
+}
+
+extension Observe {
+
+    /// Observe reading ``PropertyModifier`` on ``AtomicState``.
+    public init(
+        _ propertyKeyPath: KeyPath<State, Computed<Value>>
+    ) {
+        self.containerKeyPath = .computed(propertyKeyPath)
+    }
+}
+
+public extension ObserveKeyed {
+    /// Observe reading ``Property`` on ``KeyedState``
+    init(_ propertyKeyPath: KeyPath<State, ComputedKeyed<Identifier, Value>>) {
+        self.containerKeyPath = .derived(propertyKeyPath)
+    }
+}
+

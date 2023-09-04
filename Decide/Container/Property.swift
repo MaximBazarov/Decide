@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 /// Managed by ``ApplicationEnvironment`` storage for values that can be observed and mutated.
-/// 
+///
 /// TBD: how to access and mutate.
 @propertyWrapper
 @MainActor public final class Property<Value> {
@@ -51,3 +51,39 @@
     let file: String
     let line: UInt
 }
+
+extension Observe {
+    
+    /// Observe reading ``PropertyModifier`` on ``AtomicState``.
+    public init(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>
+    ) {
+        self.containerKeyPath = .property(propertyKeyPath)
+    }
+}
+
+public extension ObserveKeyed {
+    /// Observe reading ``Property`` on ``KeyedState``
+    init(_ propertyKeyPath: KeyPath<State, Property<Value>>) {
+        self.containerKeyPath = .property(propertyKeyPath)
+    }
+}
+
+extension DefaultObserve {
+
+    /// Observe reading ``PropertyModifier`` on ``AtomicState``.
+    public init(
+        _ propertyKeyPath: KeyPath<State, Property<Value>>
+    ) {
+        self.containerKeyPath = .property(propertyKeyPath)
+    }
+}
+
+public extension DefaultObserveKeyed {
+    /// Observe reading ``Property`` on ``KeyedState``
+    init(_ propertyKeyPath: KeyPath<State, Property<Value>>) {
+        self.containerKeyPath = .property(propertyKeyPath)
+    }
+}
+
+

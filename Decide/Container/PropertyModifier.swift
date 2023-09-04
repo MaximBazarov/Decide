@@ -19,3 +19,31 @@ import Foundation
     associatedtype Value
     var wrappedValue: Property<Value> { get }
 }
+
+extension Observe {
+    
+    /// Observe reading ``PropertyModifier`` on ``AtomicState``.
+    public init<WrappedProperty: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
+        self.containerKeyPath = .property(propertyKeyPath.appending(path: \.wrappedValue))
+    }
+}
+
+public extension ObserveKeyed {
+    
+    /// Observe reading ``PropertyModifier`` on ``KeyedState``
+    init<WrappedProperty: PropertyModifier>(
+        _ propertyKeyPath: KeyPath<State, WrappedProperty>
+    ) where WrappedProperty.Value == Value {
+        self.containerKeyPath = .property(propertyKeyPath.appending(path: \.wrappedValue))
+    }
+}
+
+public extension DefaultObserveKeyed {
+    init<ModifiedProperty: PropertyModifier>(
+        _ keyPath: KeyPath<State, ModifiedProperty>
+    ) where ModifiedProperty.Value == Value {
+        self.containerKeyPath = .property(keyPath.appending(path: \.wrappedValue))
+    }
+}

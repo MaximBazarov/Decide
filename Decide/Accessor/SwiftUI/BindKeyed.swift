@@ -22,18 +22,7 @@ import SwiftUI
     @ObservedObject var observer = ObservedObjectWillChangeNotification()
     let context: Context
 
-
     let propertyKeyPath: KeyPath<State, Property<Value>>
-
-    public init(
-        _ propertyKeyPath: KeyPath<State, Mutable<Value>>,
-        file: String = #fileID,
-        line: Int = #line
-    ) {
-        let context = Context(file: file, line: line)
-        self.context = context
-        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
-    }
 
     public subscript(_ identifier: Identifier) -> Binding<Value> {
         Binding<Value>(

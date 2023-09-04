@@ -24,16 +24,6 @@ import SwiftUI
 
     let propertyKeyPath: KeyPath<State, Property<Value>>
 
-    public init(
-        _ propertyKeyPath: KeyPath<State, Mutable<Value>>,
-        file: String = #fileID,
-        line: Int = #line
-    ) {
-        let context = Context(file: file, line: line)
-        self.context = context
-        self.propertyKeyPath = propertyKeyPath.appending(path: \.wrappedValue)
-    }
-
     public var wrappedValue: Value {
         get {
             environment.subscribe(Observer(observer), on: propertyKeyPath)
