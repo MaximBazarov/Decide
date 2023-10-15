@@ -19,9 +19,9 @@ import DecideTesting
 
 @MainActor final class AtomicState_Tests: XCTestCase {
     
-    final class State: AtomicState {
-        @Property var str = "str-default"
-        @Mutable @Property var strMutable = "strMutable-default"
+    final class Storage: AtomicStorage {
+        @ObservableState var str = "str-default"
+        @Mutable @ObservableState var strMutable = "strMutable-default"
     }
 
     //===------------------------------------------------------------------===//
@@ -31,19 +31,21 @@ import DecideTesting
     func test_DefaultValue_whenDidNotInitialize() throws {
         let sut = ApplicationEnvironment()
 
-        sut.AssertValueAt(\State.$str, isEqual: "str-default")
-        sut.AssertValueAt(\State.$strMutable, isEqual: "strMutable-default")
+        sut.AssertValueAt(\Storage.$str, isEqual: "str-default")
+        sut.AssertValueAt(\Storage.$strMutable, isEqual: "strMutable-default")
     }
 
     func test_SetValue() throws {
         let sut = ApplicationEnvironment()
 
         let newValue = "\(#function)-modified"
-        sut.setValue(newValue, \State.$str)
-        sut.setValue(newValue, \State.$strMutable)
+        sut.makeDecision { e in
+            e[\Storage.$str] = newValue
+            e[\Storage.$strMutable] = newValue
+        }
 
-        sut.AssertValueAt(\State.$str, isEqual: newValue)
-        sut.AssertValueAt(\State.$strMutable, isEqual: newValue)
+        sut.AssertValueAt(\Storage.$str, isEqual: newValue)
+        sut.AssertValueAt(\Storage.$strMutable, isEqual: newValue)
     }
 
     //===------------------------------------------------------------------===//
@@ -52,9 +54,11 @@ import DecideTesting
 
     class Tracker: EnvironmentObservingObject {
         @DefaultEnvironment var environment
-        @DefaultObserve(\State.$str) var str
-        @DefaultObserve(\State.$strMutable) var strMutableObserve
-        @DefaultBind(\State.$strMutable) var strMutable
+
+        @DefaultObserve(\Storage.$str) var str
+        @DefaultObserve(\Storage.$strMutable) var strMutableObserve
+        
+        @DefaultBind(\Storage.$strMutable) var strMutable
 
         var updatesCount: UInt = 0
 
@@ -65,7 +69,7 @@ import DecideTesting
         }
 
         func environmentDidUpdate() {
-            // we need to read property in order to subscribe.
+            // we need to read observableState in order to subscribe.
             _ = str
             _ = strMutable
             _ = strMutableObserve
@@ -80,11 +84,14 @@ import DecideTesting
         sut.didLoad()
 
         let newValue = "\(#function)-modified"
-        env.setValue(newValue, \State.$str)
-        env.setValue(newValue, \State.$strMutable)
-        env.setValue(newValue, \State.$strMutable)
+        env.decision { e in
+            e[\Storage.$str] = newValue
+            e[\Storage.$strMutable] = newValue
+            e[\Storage.$strMutable] = newValue
+        }
 
-        XCTAssertEqual(sut.updatesCount, 3)
+
+        XCTAssertEqual(sut.updatesCount, 1)
         XCTAssertEqual(sut.str, newValue)
         XCTAssertEqual(sut.strMutableObserve, newValue)
         XCTAssertEqual(sut.strMutable, newValue)
@@ -101,7 +108,7 @@ import DecideTesting
         let newValue = "\(#function)-modified"
 
         sut2.strMutable = newValue
-        env.setValue(newValue, \State.$str)
+        env.decision { $0[\Storage.$str] = newValue }
 
         XCTAssertEqual(sut.updatesCount, 2)
         XCTAssertEqual(sut.strMutable, newValue)

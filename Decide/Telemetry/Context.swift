@@ -31,16 +31,16 @@ public final class Context: Sendable {
     public let file: String
 
     /// The line number where the execution happened.
-    public let line: Int
+    public let line: UInt
 
-    public init(file: String = #fileID, line: Int = #line) {
-        self.file = file
+    public init(file: StaticString, line: UInt) {
+        self.file = file.description
         self.line = line
     }
 }
 
 extension Context: CustomDebugStringConvertible {
     public var debugDescription: String {
-        "\(file):\(line)"
+        "(at: \(file):\(line))"
     }
 }

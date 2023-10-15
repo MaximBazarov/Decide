@@ -13,13 +13,21 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import OSLog
 
-@MainActor protocol ValueContainerStorage {
-    init()
-}
-
-/// ApplicationEnvironment stores instances of ``AtomicState`` and ``KeyedState`` and provides tools for mutations and asynchronous executions of side-effects.
+/// ApplicationEnvironment stores instances of ``AtomicStorage`` and ``KeyedStorage`` and provides tools for mutations and asynchronous executions of side-effects.
 @MainActor public final class ApplicationEnvironment {
+
+    static let _subsystem = "Decide App Environment"
+    let _decisionLog = Logger(
+        subsystem: _subsystem,
+        category: "Decision"
+    )
+    let _effectLog = Logger(
+        subsystem: _subsystem,
+        category: "Effect"
+    )
+
     enum Key: Hashable {
         case atomic(ObjectIdentifier)
         case keyed(ObjectIdentifier, AnyHashable)
@@ -28,37 +36,31 @@ import Foundation
     static let `default` = ApplicationEnvironment()
 
     var storage: [Key: Any] = [:]
-    let telemetry: Telemetry = {
-        guard let config = ProcessInfo
-            .processInfo
-            .environment["DECIDE_TRACER"]
-        else {
-            return Telemetry(observer: OSLogTelemetryObserver()) // .noTelemetry 
+
+    func storage<Storage: ObservableStateStorage>(_ key: Key) -> Storage {
+        if let state = storage[key] as? Storage {
+            return state
         }
-
-        if config.replacingOccurrences(of: " ", with: "").lowercased() == "oslog" {
-            return Telemetry(observer: OSLogTelemetryObserver())
-        }
-
-        // OSLog by default
-        return Telemetry(observer: OSLogTelemetryObserver()) // .noTelemetry
-    }()
-
-    subscript<Storage: ValueContainerStorage>(_ key: Key) -> Storage {
-        if let state = storage[key] as? Storage { return state }
         let newValue = Storage.init()
         storage[key] = newValue
         return newValue
     }
 
-    public init() {}
-}
+    func observableState<Storage: AtomicStorage, Value>(
+        _ keyPath: KeyPath<Storage, ObservableState<Value>>
+    ) -> ObservableState<Value> {
+        let state: Storage = storage(Storage.key())
+        return state[keyPath: keyPath]
+    }
 
-/// An object managed by environment
-/// - Instantiated and held by ``ApplicationEnvironment``.
-/// - `environment` value is set to the ``ApplicationEnvironment`` it is executed in.
-///
-public protocol EnvironmentManagedObject: AnyObject {
-    @MainActor var environment: ApplicationEnvironment { get set }
+    func observableState<Identifier: Hashable, Storage: KeyedStorage<Identifier>, Value>(
+        _ keyPath: KeyPath<Storage, ObservableState<Value>>,
+        at id: Identifier
+    ) -> ObservableState<Value> {
+        let state: Storage = storage(Storage.key(id))
+        return state[keyPath: keyPath]
+    }
+
+    public init() {}
 }
 

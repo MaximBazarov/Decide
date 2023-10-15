@@ -12,38 +12,32 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// Managed by ``ApplicationEnvironment`` storage for values that can be observed and mutated.
-/// 
-/// TBD: how to access and mutate.
+import Foundation
+/// Managed by ``ApplicationEnvironment`` storage for objects, unlike ``ObservableState`` it doesn't support mutation nor observation.
 @propertyWrapper
-@MainActor public final class Property<Value> {
-
-    private(set) var valueContainer: ValueContainer<Value>
-    let defaultValue: () -> Value
-
-    /// Default Value
-    public var wrappedValue: Value {
+@MainActor public final class DefaultInstance<Object> {
+    public var wrappedValue: Object {
         get {
-            if let value = valueContainer.value { return value }
+            if let storage { return storage }
             let newValue = defaultValue()
-            valueContainer.value = newValue
+            storage = newValue
             return newValue
-        }
-        set {
-            valueContainer.value = newValue
         }
     }
 
-    public var projectedValue: Property<Value> {
+    public var projectedValue: DefaultInstance<Object> {
         self
     }
 
-    public init(wrappedValue: @autoclosure @escaping () -> Value, file: StaticString = #fileID, line: UInt = #line) {
-        self.valueContainer = ValueContainer()
+    public init(wrappedValue: @autoclosure @escaping () -> Object, file: StaticString = #fileID, line: UInt = #line) {
         self.defaultValue = wrappedValue
         self.file = file.description
         self.line = line
     }
+
+    // MARK: - Value Storage
+    private var storage: Object?
+    private let defaultValue: () -> Object
 
     // MARK: - Tracing
     let file: String

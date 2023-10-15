@@ -21,24 +21,24 @@ import DecideTesting
 
     let propertyUnderTest = \StateUnderTest.$name
 
-
-
     struct MustupdateState: Decision {
         let id: UUID
-
-        func mutate(environment: Decide.DecisionEnvironment) {
-            environment[\AppUnderTest.$selectedItemID] = id
-            environment.perform(effect: AppUnderTest.Editor.FetchListOfItems())
+        
+        func mutate(_ env: DecisionEnvironment) {
+            env[\AppUnderTest.$selectedItemID] = id
+            env.perform(effect: AppUnderTest.Editor.FetchListOfItems())
         }
     }
 
     func test_MakeDecision() async throws {
         let sut = ApplicationEnvironment()
 
-        await sut.makeAwaiting(decision: AppUnderTest.Editor.MustFetchList())
+        // TODO: Make awaiting method in Decide Testing
+        await sut.makeAwaiting(decision: AppUnderTest.Editor.MustFetchList(), context: Context(file: #file, line: #line))
 
-        let items = sut.getValue(\AppUnderTest.$itemList)
-        XCTAssert(items.count == 1)
+        sut.Assert(\AppUnderTest.$itemList) { items in
+            items.count == 1
+        }
     }
 }
 

@@ -15,13 +15,13 @@
 import Decide
 import Foundation
 
-final class StateUnderTest: AtomicState {
+final class StateUnderTest: AtomicStorage {
     static let defaultName = "default-atomic-state-name"
-    @Mutable @Property var name = defaultName
+    @Mutable @ObservableState var name = defaultName
 }
 
-final class KeyedStateUnderTest: KeyedState<UUID> {
+final class KeyedStateUnderTest: KeyedStorage<UUID> {
     static let defaultName = "default-keyed-state-name"
-    @Mutable @Property var name = defaultName
+    @Mutable @ObservableState var name = defaultName
 }
 
