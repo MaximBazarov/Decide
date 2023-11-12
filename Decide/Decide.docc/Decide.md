@@ -15,9 +15,9 @@ Is a library that provides state and side effect management utilising environmen
 
 To define the structure of the ``ApplicationEnvironment`` use :
 
-- ``AtomicState``
-- ``KeyedState``
-- ``Property``
+- ``AtomicStorage``
+- ``KeyedStorage``
+- ``ObservableState``
 - ``Mutable``
 
 ### Dependency Injection

@@ -34,33 +34,48 @@ public extension ApplicationEnvironment {
         }
     }
 
-
+    func Assert<
+        Value: Equatable,
+        Storage: AtomicStorage
+    >(
+        _ keyPath: KeyPath<Storage, ObservableState<Value>>,
+        _ assertion: (Value) -> Bool,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) {
+        let containerValue = observableState(keyPath).wrappedValue
+        guard assertion(containerValue) else {
+            XCTFail(
+                "\(containerValue) is not valid"
+                , file: file, line: line)
+            return
+        }
+    }
     /// Asserts that value at given KeyPath is equal to given value.
     func AssertValueAt<
-        WrappedProperty: PropertyModifier,
         Value: Equatable,
-        State: AtomicState
+        Storage: AtomicStorage
     >(
-        _ keyPath: KeyPath<State, WrappedProperty>,
+        _ keyPath: KeyPath<Storage, ObservableState<Value>>,
         isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
-    ) where WrappedProperty.Value == Value {
-        let containerValue = getValue(keyPath.appending(path: \.wrappedValue))
+    ) {
+        let containerValue = observableState(keyPath).wrappedValue
         AssertValueIn(containerValue, isEqual: value, file: file, line: line)
     }
 
     /// Asserts that value at given KeyPath is equal to given value.
     func AssertValueAt<
         Value: Equatable,
-        State: AtomicState
+        Storage: AtomicStorage
     >(
-        _ keyPath: KeyPath<State, Property<Value>>,
+        _ keyPath: KeyPath<Storage, Mutable<Value>>,
         isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {
-        let containerValue = getValue(keyPath)
+        let containerValue = observableState(keyPath.appending(path: \.wrappedValue)).wrappedValue
         AssertValueIn(containerValue, isEqual: value, file: file, line: line)
     }
 
@@ -72,7 +87,7 @@ public extension ApplicationEnvironment {
     func AssertValueIn<
         Value: Equatable,
         Identifier: Hashable,
-        State: KeyedState<Identifier>
+        Storage: KeyedStorage<Identifier>
     >(
         _ valueA: Value,
         identifier: Identifier,
@@ -89,34 +104,32 @@ public extension ApplicationEnvironment {
 
     /// Asserts that value at given KeyPath and Identifier is equal to given value.
     func AssertValueAt<
-        WrappedProperty: PropertyModifier,
         Value: Equatable,
         Identifier: Hashable,
-        State: KeyedState<Identifier>
+        Storage: KeyedStorage<Identifier>
     >(
-        _ keyPath: KeyPath<State, WrappedProperty>,
-        at identifier: Identifier,
-        isEqual value: Value,
-        file: StaticString = #file,
-        line: UInt = #line
-    ) where WrappedProperty.Value == Value {
-        let containerValue = getValue(keyPath.appending(path: \.wrappedValue), at: identifier)
-        AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
-    }
-
-    /// Asserts that value at given KeyPath and Identifier is equal to given value.
-    func AssertValueAt<
-        Value: Equatable,
-        Identifier: Hashable,
-        State: KeyedState<Identifier>
-    >(
-        _ keyPath: KeyPath<State, Property<Value>>,
+        _ keyPath: KeyPath<Storage, ObservableState<Value>>,
         at identifier: Identifier,
         isEqual value: Value,
         file: StaticString = #file,
         line: UInt = #line
     ) {
-        let containerValue = getValue(keyPath, at: identifier)
+        let containerValue = observableState(keyPath, at: identifier).wrappedValue
+        AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
+    }
+
+    func AssertValueAt<
+        Value: Equatable,
+        Identifier: Hashable,
+        Storage: KeyedStorage<Identifier>
+    >(
+        _ keyPath: KeyPath<Storage, Mutable<Value>>,
+        at identifier: Identifier,
+        isEqual value: Value,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) {
+        let containerValue = observableState(keyPath.appending(path: \.wrappedValue), at: identifier).wrappedValue
         AssertValueIn(containerValue, identifier: identifier, isEqual: value, file: file, line: line)
     }
 }

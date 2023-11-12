@@ -11,16 +11,13 @@
 // SPDX-License-Identifier: MIT
 //
 //===----------------------------------------------------------------------===//
-import SwiftUI
 
 @propertyWrapper
-@MainActor public struct Instance<State: AtomicState, Object> {
+@MainActor public struct Instance<Storage: AtomicStorage, Object> {
 
-    public typealias PropertyKeyPath = KeyPath<State, DefaultInstance<Object>>
+    private let instanceKeyPath: KeyPath<Storage, DefaultInstance<Object>>
 
-    private let instanceKeyPath: PropertyKeyPath
-
-    public init(_ keyPath: KeyPath<State, DefaultInstance<Object>>) {
+    public init(_ keyPath: KeyPath<Storage, DefaultInstance<Object>>) {
         self.instanceKeyPath = keyPath
     }
 
@@ -44,10 +41,10 @@ import SwiftUI
 }
 
 extension ApplicationEnvironment {
-    func defaultInstance<State: AtomicState, Object>(
-        at keyPath: KeyPath<State, DefaultInstance<Object>>
+    func defaultInstance<Storage: AtomicStorage, Object>(
+        at keyPath: KeyPath<Storage, DefaultInstance<Object>>
     ) -> DefaultInstance<Object> {
-        let storage: State = self[State.key()]
+        let storage: Storage = storage(Storage.key())
         return storage[keyPath: keyPath]
     }
 }

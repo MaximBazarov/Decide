@@ -11,7 +11,7 @@ Decide offers a way to define observable states outside of a SwiftUI view and pr
 This is achieved by introducing the [`Decision`](#decision) and [`Effect`](#effect) abstractions, which are designed to define state mutations and execute side effects.
 These abstractions are more effective for modularization compared to the UseCase/Operation or Action/Reducer/Effect models. 
 They offer a more intuitive approach to business requirements, thereby enhancing the overall coding process. 
-Decide also eliminates the need for dependency injection anywhere but effects and some services [and provides tools](#dependency-injection) to define `DefaultInstance` as a variation of property and access it with `Instance` property wrapper to obtain the instance. 
+Decide also eliminates the need for dependency injection anywhere but effects and some services [and provides tools](#dependency-injection) to define `DefaultInstance` as a variation of observableState and access it with `Instance` observableState wrapper to obtain the instance. 
 
 
 Additionaly **DecideTesting** provides tools to replace the environment and track execution in tests, allowing for the implementation of functionality tests (black box testing) as easily as unit tests. 

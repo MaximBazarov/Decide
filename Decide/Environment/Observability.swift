@@ -29,7 +29,7 @@ final class Observer: Hashable {
     private var notification: Notification
     private var id: ObjectIdentifier
 
-    @MainActor init(_ observer: ObservedObjectWillChangeNotification) {
+    @MainActor init<O: ObservableObject>(_ observer: O) where O.ObjectWillChangePublisher == ObservableObjectPublisher{
         self.notification = Notification { [weak observer] in
             observer?.objectWillChange.send()
         }
@@ -56,8 +56,8 @@ final class Observer: Hashable {
     }
 }
 
-/// ObservableObject for a value.
-final class ObservedObjectWillChangeNotification: ObservableObject {}
+///// ObservableObject for a value.
+//final class ObservedObjectWillChangeNotification: ObservableObject {}
 
 @MainActor final class ObserverStorage {
     private var observers: Set<Observer> = []
@@ -70,6 +70,11 @@ final class ObservedObjectWillChangeNotification: ObservableObject {}
         let result = observers
         observers = []
         return result
+    }
+
+    func sendAll() {
+        let observers = popObservers()
+        observers.forEach { $0.notify() }
     }
 }
 

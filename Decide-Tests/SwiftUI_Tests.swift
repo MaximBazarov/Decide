@@ -19,15 +19,15 @@ import DecideTesting
 
 @MainActor final class SwiftUI_Tests: XCTestCase {
 
-    final class State: KeyedState<Int> {
-        @Property var str = "str-default"
-        @Mutable @Property var strMutable = "strMutable-default"
+    final class Storage: KeyedStorage<Int> {
+        @ObservableState var str = "str-default"
+        @Mutable @ObservableState var strMutable = "strMutable-default"
     }
 
     struct ViewUnderTest: View {
-        @BindKeyed(\State.$strMutable) var strMutable
-        @ObserveKeyed(\State.$str) var str
-        @ObserveKeyed(\State.$strMutable) var strMutableObserved
+        @BindKeyed(\Storage.$strMutable) var strMutable
+        @ObserveKeyed(\Storage.$str) var str
+        @ObserveKeyed(\Storage.$strMutable) var strMutableObserved
 
         var body: some View {
             TextField("", text: strMutable[1])

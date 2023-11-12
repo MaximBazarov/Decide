@@ -15,13 +15,7 @@
 import Foundation
 
 @MainActor public class PersistencyStrategy<Value> {
-    private(set) var valueContainer: ValueContainer<Value>
-
-    public init(valueContainer: ValueContainer<Value>) {
-        self.valueContainer = valueContainer
-    }
-
-    func valueDidChange() {
+    func valueDidChange(value: Value) {
         fatalError("Not implemented")
     }
 }

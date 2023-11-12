@@ -19,7 +19,7 @@ import Decide
 
 /// Application That uses all available APIs of Decide.
 /// Must provide 100% coverage of functionality Decide ships.
-final class AppUnderTest: AtomicState {
+final class AppUnderTest: AtomicStorage {
 
     //===------------------------------------------------------------------===//
     // MARK: - Dependency Injection
@@ -32,23 +32,23 @@ final class AppUnderTest: AtomicState {
     //===------------------------------------------------------------------===//
 
     /// isEnabled["feature-flag-key"]
-    final class FeatureFlag: KeyedState<String> {
-        @Property var isEnabled: Bool = false
+    final class FeatureFlag: KeyedStorage<String> {
+        @ObservableState var isEnabled: Bool = false
     }
 
     //===------------------------------------------------------------------===//
     // MARK: - Item List
     //===------------------------------------------------------------------===//
-    @Property var selectedItemID: Item.ID?
-    @Property var itemList: [Item.ID] = []
+    @ObservableState var selectedItemID: Item.ID?
+    @ObservableState var itemList: [Item.ID] = []
 
     /// Item properties
-    final class Item: KeyedState<Item.ID> {
+    final class Item: KeyedStorage<Item.ID> {
         typealias ID = UUID
 
-        @Property var propString = "propString"
-        @Mutable @Property var mutpropString = "mutpropString"
-        @Property var isAvailable: Bool = true
+        @ObservableState var propString = "propString"
+        @Mutable @ObservableState var mutpropString = "mutpropString"
+        @ObservableState var isAvailable: Bool = true
     }
 
     //===------------------------------------------------------------------===//
@@ -59,24 +59,24 @@ final class AppUnderTest: AtomicState {
     /// - Edit curently selected item
     /// - Delete item
     ///
-    final class Editor: AtomicState {
+    final class Editor: AtomicStorage {
 
         /// An ID of the item that is currently edited.
-        @Property var itemID: Item.ID?
+        @ObservableState var itemID: Item.ID?
 
 
         /// Decided to add and select a new item.
         struct MustAddAndSelectNewItem: Decision {
-            func mutate(environment: DecisionEnvironment) {
+            func mutate(_ env: Decide.DecisionEnvironment) {
                 let newID = Item.ID()
-                environment[\AppUnderTest.$itemList].append(newID)
-                environment[\AppUnderTest.$selectedItemID] = newID
+                env[\AppUnderTest.$itemList].append(newID)
+                env[\AppUnderTest.$selectedItemID] = newID
             }
         }
 
         struct MustFetchList: Decision {
-            func mutate(environment: DecisionEnvironment) {
-                environment.perform(effect: FetchListOfItems())
+            func mutate(_ env: Decide.DecisionEnvironment) {
+                env.perform(effect: FetchListOfItems())
             }
         }
 
@@ -90,14 +90,14 @@ final class AppUnderTest: AtomicState {
                     \AppUnderTest.Item.$propString, at: Item.ID()
                 ]
                 let _: String? = try? await net.fetch(
-                    URLRequest(url: URL(string: "hellofresh.com")!)
+                    URLRequest(url: URL(string: "example.com")!)
                 )
                 await env.make(decision: MustUpdateItemList())
             }
 
             struct MustUpdateItemList: Decision {
-                func mutate(environment: DecisionEnvironment) {
-                    environment[\AppUnderTest.$itemList] = [.init()]
+                func mutate(_ env: Decide.DecisionEnvironment) {
+                    env[\AppUnderTest.$itemList] = [.init()]
                 }
             }
         }
