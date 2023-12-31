@@ -2,7 +2,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the Decide package open source project
-//b
+//
 // Copyright (c) 2020-2023 Maxim Bazarov and the Decide package
 // open source project authors
 // Licensed under MIT
