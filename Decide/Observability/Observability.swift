@@ -13,45 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import Combine
-
 
 /// Holds a week reference to actual observer, notifies only if object still exist.
-final class Observer: Hashable {
-    final class Notification {
-        let notify: () -> Void
-
-        init(notify: @escaping () -> Void) {
-            self.notify = notify
-        }
-    }
-
-    private var notification: Notification
+public final class Observer: Hashable {
+    private(set) var notify: () -> Void
     private var id: ObjectIdentifier
 
-    @MainActor init<O: ObservableObject>(_ observer: O) where O.ObjectWillChangePublisher == ObservableObjectPublisher{
-        self.notification = Notification { [weak observer] in
-            observer?.objectWillChange.send()
-        }
+    @MainActor init<O: AnyObject>(_ observer: O, notify: @escaping () -> Void) {
+        self.notify = notify
         self.id = ObjectIdentifier(observer)
     }
 
-    @MainActor init(_ observer: EnvironmentObservingObject) {
-        self.notification = Notification { [weak observer] in
-            observer?.environmentDidUpdate()
-        }
-        self.id = ObjectIdentifier(observer)
-    }
-
-    @MainActor func notify() {
-        notification.notify()
-    }
-
-    static func == (lhs: Observer, rhs: Observer) -> Bool {
+    public static func == (lhs: Observer, rhs: Observer) -> Bool {
         return lhs.id == rhs.id
     }
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
 }

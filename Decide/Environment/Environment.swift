@@ -15,52 +15,52 @@
 import Foundation
 import OSLog
 
-/// ApplicationEnvironment stores instances of ``AtomicStorage`` and ``KeyedStorage`` and provides tools for mutations and asynchronous executions of side-effects.
-@MainActor public final class ApplicationEnvironment {
+let osLogDecideSubsystem = "Decide"
 
-    static let _subsystem = "Decide App Environment"
-    let _decisionLog = Logger(
-        subsystem: _subsystem,
-        category: "Decision"
-    )
-    let _effectLog = Logger(
-        subsystem: _subsystem,
-        category: "Effect"
-    )
+/// Shared environment among all components of the system.
+/// Unless overridden in component, ``SharedEnvironment/default`` is used.
+public final class SharedEnvironment {
+    typealias Key = ObjectIdentifier
+    @MainActor private var warehouse: [Key: any StateRoot] = [:]
 
-    enum Key: Hashable {
-        case atomic(ObjectIdentifier)
-        case keyed(ObjectIdentifier, AnyHashable)
-    }
-
-    static let `default` = ApplicationEnvironment()
-
-    var storage: [Key: Any] = [:]
-
-    func storage<Storage: ObservableStateStorage>(_ key: Key) -> Storage {
-        if let state = storage[key] as? Storage {
-            return state
+    /// Provides the storage of a given type
+    /// that conforms to ``EnvironmentStateStorage``
+    @MainActor func get<Root: StateRoot>(_ type: Root.Type) -> Root {
+        let key = Key(type)
+        if let value = warehouse[key] {
+            return unsafeDowncast(value, to: Root.self)
         }
-        let newValue = Storage.init()
-        storage[key] = newValue
-        return newValue
-    }
 
-    func observableState<Storage: AtomicStorage, Value>(
-        _ keyPath: KeyPath<Storage, ObservableState<Value>>
-    ) -> ObservableState<Value> {
-        let state: Storage = storage(Storage.key())
-        return state[keyPath: keyPath]
+        let value = type.init(environment: self)
+        warehouse[key] = value
+        return value
     }
-
-    func observableState<Identifier: Hashable, Storage: KeyedStorage<Identifier>, Value>(
-        _ keyPath: KeyPath<Storage, ObservableState<Value>>,
-        at id: Identifier
-    ) -> ObservableState<Value> {
-        let state: Storage = storage(Storage.key(id))
-        return state[keyPath: keyPath]
-    }
-
-    public init() {}
 }
 
+//===----------------------------------------------------------------------===//
+// MARK: - SwiftUI Support
+//===----------------------------------------------------------------------===//
+
+#if canImport(SwiftUI)
+import SwiftUI
+
+private struct SharedEnvironment_SwiftUIEnvironmentKey: EnvironmentKey {
+    static let defaultValue: SharedEnvironment = .default
+}
+
+public extension EnvironmentValues {
+
+    /// Overrides ``Environment`` in the SwiftUI View environment
+    var sharedEnvironment: SharedEnvironment {
+        get { self[SharedEnvironment_SwiftUIEnvironmentKey.self] }
+        set { self[SharedEnvironment_SwiftUIEnvironmentKey.self] = newValue }
+    }
+}
+
+public extension View {
+    /// Overrides ``Environment`` in the view environment`
+    func sharedEnvironment(_ value: SharedEnvironment) -> some View {
+        environment(\.sharedEnvironment, value)
+    }
+}
+#endif

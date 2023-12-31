@@ -14,18 +14,18 @@
 
 import Foundation
 import Decide
-
-public extension ApplicationEnvironment {
-
-    private struct TestingDecision: Decision {
-        func mutate(_ env: Decide.DecisionEnvironment) {
-            mutation(env)
-        }
-        
-        let mutation: EnvironmentMutation
-    }
-
-    func decision(_ mutate: @escaping EnvironmentMutation, file: StaticString = #file, line: UInt = #line) {
-        self.make(decision: TestingDecision(mutation: mutate), context: Context(file: file, line: line))
-    }
-}
+//
+//public extension ApplicationEnvironment {
+//
+//    private struct TestingDecision: Decision {
+//        func mutate(_ env: Decide.DecisionEnvironment) {
+//            mutation(env)
+//        }
+//        
+//        let mutation: EnvironmentMutation
+//    }
+//
+//    func decision(_ mutate: @escaping EnvironmentMutation, file: StaticString = #file, line: UInt = #line) {
+//        self.make(decision: TestingDecision(mutation: mutate), context: Context(file: file, line: line))
+//    }
+//}
