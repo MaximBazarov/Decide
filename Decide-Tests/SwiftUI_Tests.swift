@@ -19,20 +19,39 @@ import DecideTesting
 
 @MainActor final class SwiftUI_Tests: XCTestCase {
 
-    final class Storage: KeyedStorage<Int> {
-        @ObservableState var str = "str-default"
-        @Mutable @ObservableState var strMutable = "strMutable-default"
+    final class Storage: StateRoot {
+        unowned var environment: Decide.SharedEnvironment
+        init(environment: Decide.SharedEnvironment) {
+            self.environment = environment
+        }
+
+        @ObservableValue
+        @Persistent
+        var str = "str-default"
+
+        func doTest() {
+        }
+    }
+
+    struct UpdateStr: ValueDecision {
+        var newValue: String
+
+        func mutate(_ env: Decide.DecisionEnvironment) {
+//            env[\.Storage.$str] = newValue
+        }
     }
 
     struct ViewUnderTest: View {
-        @BindKeyed(\Storage.$strMutable) var strMutable
-        @ObserveKeyed(\Storage.$str) var str
-        @ObserveKeyed(\Storage.$strMutable) var strMutableObserved
+        @SwiftUIBind(
+            \Storage.$str,
+             mutate: UpdateStr.self
+        ) var str
 
         var body: some View {
-            TextField("", text: strMutable[1])
-            Text(str[1])
-            Text(strMutableObserved[1])
+            EmptyView()
+//            TextField("", text: $str)
+//            Text(str[1])
+//            Text(strMutableObserved[1])
         }
     }
 

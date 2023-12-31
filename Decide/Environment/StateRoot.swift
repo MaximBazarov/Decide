@@ -12,10 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+/// Describes a "region" of in the environment to store ``ObservableState``.
+/// Serves as a root type for the ``ObservableState`` keys,
+/// e.g. `\MyState.myValue`. Here `MyState` is a ``StateRoot``.
+@MainActor public protocol StateRoot: AnyObject {
+    var environment: SharedEnvironment { get }
+    init(environment: SharedEnvironment)
+}
 
-@MainActor public class PersistencyStrategy<Value> {
-    func valueDidChange(value: Value) {
-        fatalError("Not implemented")
-    }
+public extension SharedEnvironment {
+    static let `default` = SharedEnvironment()
 }
