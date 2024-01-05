@@ -1,4 +1,4 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the Decide package open source project
@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "Decide",
@@ -28,13 +29,24 @@ let package = Package(
         .library(name: "DecideTesting", targets: ["DecideTesting"]),
     ],
     dependencies: [
+        // Depend on the Swift 5.9 release of SwiftSyntax
+        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
-        // - Decide -
         .target(
             name: "Decide",
-            dependencies: [],
+            dependencies: [
+                "DecideMacros"
+            ],
             path: "Decide"
+        ),
+        .macro(
+            name: "DecideMacros",
+            dependencies: [
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+            ],
+            path: "DecideMacros"
         ),
         .testTarget(
             name: "Decide-Tests",
@@ -49,6 +61,16 @@ let package = Package(
             name: "DecideTesting",
             dependencies: ["Decide"],
             path: "DecideTesting"
+        ),
+        // Macros Tests
+        .testTarget(
+            name: "DecideMacros-Tests",
+            dependencies: [
+                "Decide",
+                "DecideMacros",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+            ],
+            path: "DecideMacros-Tests"
         ),
     ]
 )
