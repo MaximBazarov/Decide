@@ -16,6 +16,7 @@ import Foundation
 
 @MainActor
 public final class ValueStorage<Value> {
+    var observation = ObserverStorage()
     public var initialValue: () -> Value
     public var value: Value {
         get {
@@ -37,5 +38,17 @@ public final class ValueStorage<Value> {
         initialValue: @escaping () -> Value
     ) {
         self.initialValue = initialValue
+    }
+}
+
+extension ValueStorage {
+    public func getValueSubscribing(observer: Observer) -> Value {
+        observation.subscribe(observer)
+        return value
+    }
+
+    public func set(value newValue: Value) {
+        value = newValue
+        observation.sendAll()
     }
 }

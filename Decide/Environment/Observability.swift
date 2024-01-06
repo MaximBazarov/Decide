@@ -16,8 +16,13 @@ import Foundation
 
 /// Holds a week reference to actual observer, notifies only if object still exist.
 public final class Observer: Hashable {
-    private(set) var notify: () -> Void
+    private var notify: () -> Void
     private var id: ObjectIdentifier
+
+    public func send() {
+        print("notified \(id)")
+        notify()
+    }
 
     @MainActor init<O: AnyObject>(_ observer: O, notify: @escaping () -> Void) {
         self.notify = notify
@@ -51,7 +56,7 @@ public final class Observer: Hashable {
 
     func sendAll() {
         let observers = popObservers()
-        observers.forEach { $0.notify() }
+        observers.forEach { $0.send() }
     }
 }
 

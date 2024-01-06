@@ -15,7 +15,6 @@
 import SwiftUI
 import Decide
 import XCTest
-import DecideTesting
 
 @MainActor final class SwiftUI_Tests: XCTestCase {
 
@@ -33,8 +32,8 @@ import DecideTesting
     struct UpdateStr: ValueDecision {
         var newValue: String
 
-        func mutate(_ env: Decide.DecisionEnvironment) {
-//            env[\.Storage.$str] = newValue
+        func mutate(_ env: DecisionEnvironment) {
+            var x = env[\Storage.$str]
         }
     }
 

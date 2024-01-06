@@ -47,23 +47,16 @@ public final class Bind<Root, Value> where Root: StateRoot {
         get {
             let wrapperInstance = instance[keyPath: storageKeyPath]
             let root = wrapperInstance.environment.get(Root.self)
-            let observableValue = root[keyPath: wrapperInstance.statePath]
-
-#warning("""
-TODO: Squash updates of any values this instance is subscribed to,
-to one update to instance.
-""")
-            let observer = Observer(wrapperInstance) { [weak instance] in
+            let observableValue = root[keyPath: wrapperInstance.statePath.appending(path: \.storage)]
+            let observer = Observer(instance) { [weak instance] in
                 instance?.onChange()
             }
-
-
             return observableValue.getValueSubscribing(observer: observer)
         }
         set {
             let wrapperInstance = instance[keyPath: storageKeyPath]
             let root = wrapperInstance.environment.get(Root.self)
-            let observableValue = root[keyPath: wrapperInstance.statePath]
+            let observableValue = root[keyPath: wrapperInstance.statePath.appending(path: \.storage)]
             observableValue.set(value: newValue)
         }
     }

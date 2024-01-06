@@ -17,9 +17,10 @@
  Contains the reference to the storage of the value.
  */
 @MainActor
-public protocol ObservableValueWrapper {
+public protocol ObservableValueStorageWrapper {
     associatedtype Value
     var storage: ValueStorage<Value> { get }
+    var projectedValue: Self { get }
 }
 
 /**
@@ -28,35 +29,20 @@ public protocol ObservableValueWrapper {
  */
 @propertyWrapper
 @MainActor
-public final class ObservableValue<Value> {
-    
+public final class ObservableValue<Value>: ObservableValueStorageWrapper {
     public var wrappedValue: Value {
-        valueStorage.value
+        storage.value
     }
 
     public var projectedValue: ObservableValue<Value> { self }
 
-    var valueStorage: ValueStorage<Value>
-    var observation = ObserverStorage()
+    public var storage: ValueStorage<Value>
 
     public init(wrappedValue: @autoclosure @escaping () -> Value) {
-        self.valueStorage = ValueStorage(initialValue: wrappedValue)
+        self.storage = ValueStorage(initialValue: wrappedValue)
     }
 
-    public init<Wrapper: ObservableValueWrapper>(wrappedValue: Wrapper) where Wrapper.Value == Value {
-        self.valueStorage = wrappedValue.storage
-    }
-}
-
-extension ObservableValue {
-    public func getValueSubscribing(observer: Observer) -> Value {
-        observation.subscribe(observer)
-        return wrappedValue
-    }
-
-    public func set(value newValue: Value) {
-        valueStorage.value = newValue
-        observation.sendAll()
+    public init<Wrapper: ObservableValueStorageWrapper>(wrappedValue: Wrapper) where Wrapper.Value == Value {
+        self.storage = wrappedValue.storage
     }
 }
-
