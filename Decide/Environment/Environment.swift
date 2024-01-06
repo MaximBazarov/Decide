@@ -17,25 +17,49 @@ import OSLog
 
 let osLogDecideSubsystem = "Decide"
 
+public extension SharedEnvironment {
+    static let `default` = SharedEnvironment()
+}
+
 /// Shared environment among all components of the system.
 /// Unless overridden in component, ``SharedEnvironment/default`` is used.
 public final class SharedEnvironment {
-    typealias Key = ObjectIdentifier
-    @MainActor private var warehouse: [Key: any StateRoot] = [:]
+    enum Key: Hashable {
+        case atomic(ObjectIdentifier)
+        case identified(ObjectIdentifier, AnyHashable)
+    }
+
+    @MainActor private var warehouse: [Key: AnyObject] = [:]
 
     /// Provides the storage of a given type
     /// that conforms to ``EnvironmentStateStorage``
     @MainActor func get<Root: StateRoot>(_ type: Root.Type) -> Root {
-        let key = Key(type)
+        let key = Key.atomic(ObjectIdentifier(type))
         if let value = warehouse[key] {
             return unsafeDowncast(value, to: Root.self)
         }
 
-        let value = type.init(environment: self)
+        let value = type.init()
+        warehouse[key] = value
+        return value
+    }
+
+    @MainActor func get<Identifier: Hashable, Root: IdentifiedStateRoot>(
+        _ type: Root.Type,
+        at id: Identifier
+    ) -> Root where Root.Identifier == Identifier {
+        let key = Key.identified(ObjectIdentifier(type), id)
+        if let value = warehouse[key] {
+            return unsafeDowncast(value, to: Root.self)
+        }
+
+        let value = type.init(id: id)
         warehouse[key] = value
         return value
     }
 }
+
+
 
 //===----------------------------------------------------------------------===//
 // MARK: - SwiftUI Support

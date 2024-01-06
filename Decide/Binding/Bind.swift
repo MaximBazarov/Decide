@@ -12,55 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-final class ChangesPublisher: ObservableObject {}
-
-#if canImport(SwiftUI)
-import SwiftUI
-
-@propertyWrapper
-@MainActor
-public struct SwiftUIBind<
-    Root: StateRoot,
-    Value,
-    Mutation: ValueDecision
->: DynamicProperty  {
-    @SwiftUI.Environment(\.sharedEnvironment) var environment
-    @ObservedObject var publisher = ChangesPublisher()
-
-    public var wrappedValue: Value {
-        get {
-            environment
-                .get(Root.self)[keyPath: statePath]
-                .getValueSubscribing(
-                    observer: Observer(publisher) { [weak publisher] in
-                        publisher?.objectWillChange.send()
-                    }
-                )
-        }
-        set {
-            environment
-                .get(Root.self)[keyPath: statePath]
-                .set(value: newValue)
-        }
-    }
-
-    let statePath: KeyPath<Root, ObservableValue<Value>>
-    let mutate: Mutation.Type
-
-    public init(
-        _ statePath: KeyPath<Root, ObservableValue<Value>>,
-        mutate: Mutation.Type
-    ) {
-        self.statePath = statePath
-        self.mutate = mutate
-    }
-}
-#endif
-
-public protocol ObservingEnvironmentObject: AnyObject {
-    var environment: SharedEnvironment { get set}
-    var onChange: () -> Void { get }
-}
 
 /**
  (!) Limited support for non SwiftUI objects,
@@ -91,7 +42,7 @@ public final class Bind<Root, Value> where Root: StateRoot {
         wrapped wrappedKeyPath: KeyPath<EnclosingObject, Value>,
         storage storageKeyPath: KeyPath<EnclosingObject, Bind>
     ) -> Value
-    where EnclosingObject: ObservingEnvironmentObject
+    where EnclosingObject: EnvironmentObservingObject
     {
         get {
             let wrapperInstance = instance[keyPath: storageKeyPath]
@@ -105,6 +56,7 @@ to one update to instance.
             let observer = Observer(wrapperInstance) { [weak instance] in
                 instance?.onChange()
             }
+
 
             return observableValue.getValueSubscribing(observer: observer)
         }
@@ -122,3 +74,5 @@ to one update to instance.
         set { fatalError() }
     }
 }
+
+

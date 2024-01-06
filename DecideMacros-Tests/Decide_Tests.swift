@@ -1,6 +1,7 @@
 import XCTest
 import Decide
 
+#if canImport(DecideMacros)
 final class Decide_Tests: XCTestCase {
     @EnvironmentObservable
     final class Notes {
@@ -10,3 +11,4 @@ final class Decide_Tests: XCTestCase {
         var count: Int = 0
     }
 }
+#endif

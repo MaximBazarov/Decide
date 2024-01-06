@@ -20,10 +20,7 @@ import DecideTesting
 @MainActor final class SwiftUI_Tests: XCTestCase {
 
     final class Storage: StateRoot {
-        unowned var environment: Decide.SharedEnvironment
-        init(environment: Decide.SharedEnvironment) {
-            self.environment = environment
-        }
+        init() {}
 
         @ObservableValue
         @Persistent
