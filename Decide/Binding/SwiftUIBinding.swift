@@ -31,7 +31,7 @@ public struct SwiftUIBind<
     public var wrappedValue: Value {
         get {
             environment
-                .get(Root.self)[keyPath: statePath]
+                .get(Root.self)[keyPath: statePath.appending(path: \.storage)]
                 .getValueSubscribing(
                     observer: Observer(publisher) { [weak publisher] in
                         publisher?.objectWillChange.send()
@@ -40,7 +40,7 @@ public struct SwiftUIBind<
         }
         nonmutating set {
             environment
-                .get(Root.self)[keyPath: statePath]
+                .get(Root.self)[keyPath: statePath.appending(path: \.storage)]
                 .set(value: newValue)
         }
     }

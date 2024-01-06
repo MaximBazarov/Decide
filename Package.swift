@@ -27,48 +27,17 @@ let package = Package(
     products: [
         .library(name: "Decide", targets: ["Decide"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax.git", "508.0.0"..<"510.0.0"),
-    ],
     targets: [
         .target(
             name: "Decide",
-            dependencies: [
-                "DecideMacros"
-            ],
             path: "Decide"
-        ),
-        .macro(
-            name: "DecideMacros",
-            dependencies: [
-                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
-            ],
-            path: "DecideMacros"
         ),
         .testTarget(
             name: "Decide-Tests",
             dependencies: [
-                "Decide",
-                "DecideTesting"
+                "Decide"
             ],
             path: "Decide-Tests"
-        ),
-        // - Decide Testing -
-        .target(
-            name: "DecideTesting",
-            dependencies: ["Decide"],
-            path: "DecideTesting"
-        ),
-        // Macros Tests
-        .testTarget(
-            name: "DecideMacros-Tests",
-            dependencies: [
-                "Decide",
-                "DecideMacros",
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-            ],
-            path: "DecideMacros-Tests"
         ),
     ]
 )

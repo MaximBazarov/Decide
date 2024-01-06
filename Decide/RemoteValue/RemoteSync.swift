@@ -22,15 +22,16 @@ import Foundation
  */
 @propertyWrapper
 @MainActor
-public final class RemoteValue<Value>: ObservableValueWrapper {
+public final class RemoteValue<Value>: ObservableValueStorageWrapper {
     public var wrappedValue: Value { storage.value }
+    public var projectedValue: RemoteValue<Value> { self }
     public var storage: ValueStorage<Value>
 
     public init(wrappedValue: @autoclosure @escaping () -> Value) {
         self.storage = ValueStorage(initialValue: wrappedValue)
     }
 
-    public init<Wrapper: ObservableValueWrapper>(wrappedValue: Wrapper) where Wrapper.Value == Value {
+    public init<Wrapper: ObservableValueStorageWrapper>(wrappedValue: Wrapper) where Wrapper.Value == Value {
         self.storage = wrappedValue.storage
     }
 }
