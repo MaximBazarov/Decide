@@ -26,11 +26,9 @@ let package = Package(
     ],
     products: [
         .library(name: "Decide", targets: ["Decide"]),
-        .library(name: "DecideTesting", targets: ["DecideTesting"]),
     ],
     dependencies: [
-        // Depend on the Swift 5.9 release of SwiftSyntax
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
+        .package(url: "https://github.com/apple/swift-syntax.git", "508.0.0"..<"510.0.0"),
     ],
     targets: [
         .target(

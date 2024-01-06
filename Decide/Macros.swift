@@ -1,3 +1,4 @@
+#if canImport(DecideMacros)
 import DecideMacros
 
 @attached(
@@ -9,5 +10,6 @@ import DecideMacros
 @attached(extension, conformances: StateRoot)
 public macro EnvironmentObservable() = #externalMacro(
     module: "DecideMacros",
-    type: "StorageMacro"
+    type: "EnvironmentObservableMacro"
 )
+#endif

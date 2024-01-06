@@ -12,16 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Decide
-import Foundation
-
-final class StateUnderTest: AtomicStorage {
-    static let defaultName = "default-atomic-state-name"
-    @Mutable @ObservableState var name = defaultName
+/// Describes a "region" of in the environment to store ``ObservableState``.
+/// Serves as a root type for the ``ObservableState`` keys,
+/// e.g. `\MyState.myValue`. Here `MyState` is a ``StateRoot``.
+@MainActor public protocol StateRoot: AnyObject {
+    init()
 }
-
-final class KeyedStateUnderTest: KeyedStorage<UUID> {
-    static let defaultName = "default-keyed-state-name"
-    @Mutable @ObservableState var name = defaultName
-}
-

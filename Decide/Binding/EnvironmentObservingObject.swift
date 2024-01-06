@@ -12,14 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-/// Describes a "region" of in the environment to store ``ObservableState``.
-/// Serves as a root type for the ``ObservableState`` keys,
-/// e.g. `\MyState.myValue`. Here `MyState` is a ``StateRoot``.
-@MainActor public protocol StateRoot: AnyObject {
-    var environment: SharedEnvironment { get }
-    init(environment: SharedEnvironment)
-}
+import Foundation
 
-public extension SharedEnvironment {
-    static let `default` = SharedEnvironment()
+final class ChangesPublisher: ObservableObject {}
+
+public protocol EnvironmentObservingObject: AnyObject {
+    var environment: SharedEnvironment { get set}
+    var onChange: () -> Void { get }
 }

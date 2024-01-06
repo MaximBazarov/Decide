@@ -22,33 +22,6 @@ public protocol ObservableValueWrapper {
     var storage: ValueStorage<Value> { get }
 }
 
-
-@MainActor
-public final class ValueStorage<Value> {
-    public var initialValue: () -> Value
-    public var value: Value {
-        get {
-            if let value = _value {
-                return value
-            }
-
-            let newValue = initialValue()
-            _value = newValue
-            return newValue
-        }
-        set {
-            _value = newValue
-        }
-    }
-
-    var _value: Value?
-    init(
-        initialValue: @escaping () -> Value
-    ) {
-        self.initialValue = initialValue
-    }
-}
-
 /**
  A wrapper that wraps the ``ValueStorage``.
  **Observability**: guaranties that any change in the value cause a notification to all observers
@@ -64,7 +37,7 @@ public final class ObservableValue<Value> {
     public var projectedValue: ObservableValue<Value> { self }
 
     var valueStorage: ValueStorage<Value>
-    private var observation = ObserverStorage()
+    var observation = ObserverStorage()
 
     public init(wrappedValue: @autoclosure @escaping () -> Value) {
         self.valueStorage = ValueStorage(initialValue: wrappedValue)
@@ -86,6 +59,4 @@ extension ObservableValue {
         observation.sendAll()
     }
 }
-
-
 

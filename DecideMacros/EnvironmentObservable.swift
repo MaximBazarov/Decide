@@ -1,11 +1,7 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-public protocol ObservableState {
-    init()
-}
-
-public struct StorageMacro: MemberMacro, MemberAttributeMacro {
+public struct EnvironmentObservableMacro: MemberMacro, MemberAttributeMacro {
     public static func expansion(
         of node: SwiftSyntax.AttributeSyntax,
         attachedTo declaration: some SwiftSyntax.DeclGroupSyntax,
@@ -44,7 +40,7 @@ public struct StorageMacro: MemberMacro, MemberAttributeMacro {
 }
 
 
-extension StorageMacro: ExtensionMacro {
+extension EnvironmentObservableMacro: ExtensionMacro {
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,

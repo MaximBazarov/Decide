@@ -46,10 +46,56 @@ public typealias EnvironmentMutation = (DecisionEnvironment) -> Void
 
     unowned var environment: SharedEnvironment
 
-    var effects = [Effect]()
-
     init(_ environment: SharedEnvironment) {
         self.environment = environment
+    }
+
+    func make(decision: Decision) {
+        /**
+         1. Create a temporary environment, something to enable transactions
+         2. Perform that mutation
+         3. Execute effects
+         */
+        decision.mutate(self)
+    }
+
+    func perform(effect: Effect) {
+        
+    }
+
+    /**
+     Subscript to direct read/write access to any atomic state.
+     */
+    public subscript<Root: StateRoot, Value>(_ path: KeyPath<Root, ObservableValue<Value>>) -> Value {
+        get {
+            let root = environment.get(Root.self)
+            let observableValue = root[keyPath: path]
+            return observableValue.wrappedValue
+        }
+        set {
+            let root = environment.get(Root.self)
+            let observableValue = root[keyPath: path]
+            observableValue.set(value: newValue)
+        }
+    }
+    
+    /**
+     Subscript to direct read/write access to any identified state.
+     */
+    public subscript<Identifier: Hashable, Root: IdentifiedStateRoot, Value>(
+        _ path: KeyPath<Root, ObservableValue<Value>>,
+        at id: Identifier
+    ) -> Value where Root.Identifier == Identifier {
+        get {
+            let root = environment.get(Root.self, at: id)
+            let observableValue = root[keyPath: path]
+            return observableValue.wrappedValue
+        }
+        set {
+            let root = environment.get(Root.self, at: id)
+            let observableValue = root[keyPath: path]
+            observableValue.set(value: newValue)
+        }
     }
 }
 
