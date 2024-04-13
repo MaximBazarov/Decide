@@ -15,16 +15,35 @@ let package = Package(
             name: "Decide",
             targets: ["Decide"]
         ),
+        .library(
+            name: "DecideUI",
+            targets: ["DecideUI"]
+        ),
     ],
     targets: [
+        // MARK: - Decide Core -
+
         .target(
             name: "Decide",
-            path: "Sources"
+            path: "DecideCore/Sources"
         ),
         .testTarget(
             name: "Decide_Tests",
             dependencies: ["Decide"],
-            path: "Tests"
+            path: "DecideCore/Tests"
+        ),
+
+        // MARK: - Decide UI -
+
+        .target(
+            name: "DecideUI",
+            dependencies: ["Decide"],
+            path: "DecideUI/Sources"
+        ),
+        .testTarget(
+            name: "DecideUI_Tests",
+            dependencies: ["DecideUI"],
+            path: "DecideUI/Tests"
         ),
     ]
 )
