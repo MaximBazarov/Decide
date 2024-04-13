@@ -1,43 +1,30 @@
-// swift-tools-version:5.9
-//===----------------------------------------------------------------------===//
-//
-// This source file is part of the Decide package open source project
-//
-// Copyright (c) 2020-2023 Maxim Bazarov and the Decide package
-// open source project authors
-// Licensed under MIT
-//
-// See LICENSE.txt for license information
-//
-// SPDX-License-Identifier: MIT
-//
-//===----------------------------------------------------------------------===//
+// swift-tools-version: 5.9
 
 import PackageDescription
-import CompilerPluginSupport
 
 let package = Package(
     name: "Decide",
     platforms: [
-        .macOS(.v13),
-        .iOS(.v14),
-        .watchOS(.v8),
-        .tvOS(.v15),
+        .macOS(.v14),
+        .iOS(.v15),
+        .watchOS(.v10),
+        .tvOS(.v17),
     ],
     products: [
-        .library(name: "Decide", targets: ["Decide"]),
+        .library(
+            name: "Decide",
+            targets: ["Decide"]
+        ),
     ],
     targets: [
         .target(
             name: "Decide",
-            path: "Decide"
+            path: "Sources"
         ),
         .testTarget(
-            name: "Decide-Tests",
-            dependencies: [
-                "Decide"
-            ],
-            path: "Decide-Tests"
+            name: "Decide_Tests",
+            dependencies: ["Decide"],
+            path: "Tests"
         ),
     ]
 )

@@ -1,0 +1,9 @@
+--allman false
+--header {file}\nCopyright © {created.year} Maxim Bazarov and Decide Authors.\nLicensed under MIT. SPDX-License-Identifier: MIT
+
+--wraparguments beforefirst
+--wrapparameters beforefirst
+
+--acronyms = "URL, UUID, ID, OAuth, JWT, JSON, HTML, XML, API, CPU, RAM, FPS, UI, HTTP, HTTPS, TCP, UDP, IP, TTL, DNS, SSL, TLS, SSH, IMAP, SMTP, POP, FTP, SFTP, SMB, NFS, VPN"
+--enable initCoderUnavailable
+--disable trailingClosures
