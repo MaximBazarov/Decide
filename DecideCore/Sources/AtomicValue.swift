@@ -3,7 +3,7 @@
 // Licensed under MIT. SPDX-License-Identifier: MIT
 
 @propertyWrapper
-public final class DefaultValue<Value>: AtomicValueStorage {
+public final class AtomicValue<Value>: AtomicValueStorage {
     var value: Value?
 
     public init(wrappedValue: @escaping (SharedEnvironment) -> Value) {

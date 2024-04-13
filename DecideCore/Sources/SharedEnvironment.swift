@@ -5,20 +5,35 @@
 import Foundation
 import OSLog
 
-extension StaticString {
-    var decideSubsystem: StaticString { "lib.decide" }
-    var decideStateIO: StaticString { "State I/O" }
+/// Public extension of `SharedEnvironment`.
+/// This extension provides a static `default` instance of `SharedEnvironment`.
+/// This `default` instance is shared across all components and modules in the system.
+/// It serves as the default environment unless a specific component overrides it locally.
+public extension SharedEnvironment {
+    /// Default environment shared across all components and modules, unless overriden locally for the component.
+    static let `default` = SharedEnvironment()
 }
 
-/// Shared environment among all components of the system.
-/// Unless overridden in component, ``SharedEnvironment/default`` is used.
-/// Works as the SwiftUI environment but shared with non-SwiftUI context.
+/// `SharedEnvironment` is a shared context used across all system components and modules.
+/// It functions similarly to the SwiftUI environment, but is also accessible in non-SwiftUI contexts.
+/// By default, unless explicitly overridden in a component, the `SharedEnvironment/default` is utilized.
 public final class SharedEnvironment {
     typealias StorageReference = ObjectIdentifier
 
     @MainActor private var storage: [StorageReference: any StorageNamespace] = [:]
 
-    @MainActor func get<Namespace: StorageNamespace>(_ namespace: Namespace.Type) -> Namespace {
+    /// This function retrieves a value from the shared environment storage.
+    /// It is marked with `@MainActor` to ensure that it's executed on the main thread.
+    ///
+    /// - Parameter namespace: The type of the storage namespace instance of which to retrieve.
+    /// - Returns: The instance of the ``Namespace`` associated with its type.
+    ///
+    /// If a value for the provided namespace type already exists in the storage, it is returned.
+    /// If not, a new instance of the namespace type is created, stored, and then returned.
+    ///
+    /// The function uses `unsafeDowncast` to cast the stored value to the specified namespace type.
+    /// This is safe as the function ensures that values stored in the storage are always of the type associated with their namespace.
+    @MainActor public func get<Namespace: StorageNamespace>(_ namespace: Namespace.Type) -> Namespace {
         let key = StorageReference(namespace)
         if let value = storage[key] {
             return unsafeDowncast(value, to: Namespace.self)
@@ -30,30 +45,9 @@ public final class SharedEnvironment {
     }
 }
 
-public extension SharedEnvironment {
-    static let `default` = SharedEnvironment()
+// MARK: - OSLog
+
+extension StaticString {
+    var decideSubsystem: StaticString { "lib.decide" }
+    var decideStateIO: StaticString { "State I/O" }
 }
-
-// MARK: - SwiftUI Environment
-
-#if canImport(SwiftUI)
-    import SwiftUI
-
-    private struct SharedEnvironment_SwiftUIEnvironmentKey: EnvironmentKey {
-        static let defaultValue: SharedEnvironment = .default
-    }
-
-    public extension EnvironmentValues {
-        var sharedEnvironment: SharedEnvironment {
-            get { self[SharedEnvironment_SwiftUIEnvironmentKey.self] }
-            set { self[SharedEnvironment_SwiftUIEnvironmentKey.self] = newValue }
-        }
-    }
-
-    public extension View {
-        /// Overrides ``SharedEnvironment`` in the SwiftUI view `Environment`.
-        func sharedEnvironment(_ value: SharedEnvironment) -> some View {
-            environment(\.sharedEnvironment, value)
-        }
-    }
-#endif
