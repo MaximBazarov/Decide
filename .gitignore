@@ -1,5 +1,6 @@
 **/.DS_Store
 .swiftpm
+!.swiftpm/Decide.xctestplan
 Package.resolved
 docs
 
