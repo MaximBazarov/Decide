@@ -53,3 +53,24 @@ import Foundation
         self.defaultValue = defaultValue
     }
 }
+
+public extension Storage {
+
+    /// Provides the ``UserDefaults`` storage for value bound to a provided key.
+    /// - Parameters:
+    ///   - key: Key for the value in the userDefaults
+    ///   - instance: Optionally provide a different than `.standard`
+    convenience init<S: ValueStorage<Value>>(
+        wrappedValue: ObservableValue<Value>,
+        userDefaults key: String,
+        instance: UserDefaults = .standard
+    ) {
+        let storage = UserDefaultsStorage(
+            configuration: .init(key: .init(value: key), userDefaults: instance),
+            defaultValue: wrappedValue.storage.getValue
+        )
+        wrappedValue.storage = storage
+        self.init(wrappedValue: wrappedValue, storage: storage)
+        self.projectedValue = wrappedValue
+    }
+}
