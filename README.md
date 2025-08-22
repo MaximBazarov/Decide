@@ -1,3 +1,6 @@
+> ‼️ ARCHIVED ‼️ It was a nice attempt but it's too complex, follow https://github.com/MaximBazarov/SwiftKiss for a new version of it.
+
+
 [![Unit Tests](https://github.com/MaximBazarov/Decide/actions/workflows/swift-build-test.yml/badge.svg)](https://github.com/MaximBazarov/Decide/actions/workflows/swift-build-test.yml)
 ___
 
@@ -13,20 +16,3 @@ These abstractions are more effective for modularization compared to the UseCase
 They offer a more intuitive approach to business requirements, thereby enhancing the overall coding process. 
 Decide also eliminates the need for dependency injection anywhere but effects and some services [and provides tools](#dependency-injection) to define `DefaultInstance` as a variation of observableState and access it with `Instance` observableState wrapper to obtain the instance. 
 
-
-Additionaly **DecideTesting** provides tools to replace the environment and track execution in tests, allowing for the implementation of functionality tests (black box testing) as easily as unit tests. 
-
-
-## Decision
-
-## Effect
-
-## Dependency Injection
-
-# Decide Testing
-A library that makes testing of Decide-based code easier by providing convenient syntax sugar. 
-
-# Caveats
-2. Cyclic computations: easy to make a cycle in Computation's dependencies by reading each other.
-
-can be solved by static analysis tools.
